@@ -8,7 +8,7 @@ author: Mohamed Ghalwash
 year: 2025-2026
 venue: Zewail City
 mdc: true
-lecture: 7
+lecture: 9
 ---
 
 <!-- <style>

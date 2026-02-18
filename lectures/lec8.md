@@ -8,7 +8,7 @@ author: Mohamed Ghalwash
 year: 2025-2026
 venue: Zewail City
 mdc: true
-lecture: 7
+lecture: 8
 ---
 
 <!-- <style>
@@ -18,7 +18,7 @@ lecture: 7
 </style> -->
 
 # Speech Recognition <br> (DSAI 456)
-## Lecture 7
+## Lecture 8
 
 Mohamed Ghalwash
 <Email v="mghalwash@zewailcity.edu.eg" />
