@@ -5,13 +5,16 @@ class: 'text-center'
 transition: slide-left
 title: Speech Recognition (DSAI 456)
 author: Mohamed Ghalwash
-year: 2025-2026
+year: Spring 2025-2026
 venue: Zewail City
 mdc: true
 lecture: 1
+slide:
+  disableSlideNumbers: true
+slide_info: false
 ---
 
-# Speech Recognition <br> (DSAI 456)
+# Speech Recognition <br> (Spring DSAI 456)
 # Lecture 1 
 
 Mohamed Ghalwash
@@ -36,7 +39,6 @@ layout: top-title
 
 ![sound-orthography dictionary](./images/ips.png){width=320}
 
-<BottomBar/>
 
 ---
 transition: fade-out
@@ -61,7 +63,6 @@ titlewidth: is-2
 ![alt text](./images/articulation.png)
 
 
-<BottomBar/>
 
 ---
 transition: fade-out
@@ -89,7 +90,6 @@ titlewidth: is-2
 
 ![alt text](./images/syllable.png){width=500}
 
-<BottomBar/>
 
 ---
 layout: top-title-two-cols
@@ -123,8 +123,6 @@ layout: top-title-two-cols
 
 <img src="./images/sin.png" alt="alt text" width="100%" height="auto">
 
-<BottomBar/>
-
 
 ---
 layout: center
@@ -135,7 +133,6 @@ class: text-center
 
 A waveform of the vowel (iy). The y-axis shows the level of air pressure above and below normal atmospheric pressure.
 
-<BottomBar/>
 
 ---
 layout: top-title
@@ -156,7 +153,6 @@ layout: top-title
       - telephone speech is often sampled at 8 kHz and stored as 8-bit samples
       - microphone data is often sampled at 16 kHz and stored as 16-bit samples
 
-<BottomBar/>
 
 ---
 layout: top-title
@@ -178,13 +174,10 @@ layout: top-title
 
 ![alt text](./images/wav.png)
 
-<BottomBar/>
 
 ---
-# layout: image-right
-# image: ./images/sound-waves.png
-layout: two-cols-title
-columns: is-8
+layout: top-title-two-cols
+columns: is-9
 ---
 
 :: title :: 
@@ -207,7 +200,6 @@ columns: is-8
 
 <img src="./images/sound-waves.png" width="85%"/>
 
-<BottomBar/>
 
 ---
 layout: center
@@ -220,7 +212,6 @@ Human can hear sound of frequencies between 20Hz and 20kHz.
 
 # Hearing ranges 
 
-<BottomBar/>
 
 ---
 layout: top-title
@@ -241,7 +232,6 @@ layout: top-title
 
 </v-clicks>
 
-<BottomBar/>
 
 ---
 layout: top-title
@@ -263,7 +253,6 @@ layout: top-title
 
 <!-- https://www.youtube.com/watch?v=eA19gFOH1JA -->
 
-<BottomBar/>
 
 ---
 layout: top-title
@@ -283,11 +272,185 @@ layout: top-title
   - Each major peak corresponding to an opening of the vocal folds
 
   - A stop consonant consists of a closure followed by a release. Can be seen as a period of silence followed by a slight burst of amplitude
-  - fricative consonant: when a narrow channel for airflow causes noisy, turbulent air
+  - Fricative consonant: when a narrow channel for airflow causes noisy, turbulent air
 
 </v-click>
 
-<BottomBar/>
+---
+layout: section
+titlewidth: is-3
+---
+
+# What is 
+  
+- ### Frequency Spectrum
+
+- ### Frequency Bands
+  
+- ### Frequency Spectrogram
+
+- ### Mel Spectrum 
+
+
+---
+layout: side-title
+titlewidth: is-3
+class: text-center
+---
+:: title :: 
+
+# Frequency Spectrum 
+
+:: content ::
+
+<img src="./images/lec2-freq-sinewaves.png" />
+
+<v-click>
+<div class="text-red-500 text-xl flex items-center gap-2">
+  <i class="i-mdi-emoticon-angry-outline"></i>
+  <span>It does not look like a sine waveform</span>
+</div>
+</v-click>
+
+
+---
+layout: side-title
+titlewidth: is-3
+---
+:: title :: 
+
+# Frequency Spectrum 
+
+:: content ::
+
+<img src="./images/lec2-freq-sinewaves2.png" />
+
+ Maybe a combination of sine waveforms <span class="text-blue-500"> _with different frequencies and amplitude_</span>
+
+
+---
+layout: side-title
+titlewidth: is-3
+---
+:: title :: 
+
+# Frequency Spectrum 
+
+:: content ::
+
+<img src="./images/lec2-freq-sinewaves3.png" />
+
+<div class="flex items-center gap-2 text-yellow-400 text-4xl">
+  <i class="i-ic-baseline-lightbulb-circle"></i>
+  <span>Aha! I got it</span>
+</div>
+
+
+---
+layout: side-title
+titlewidth: is-3
+---
+:: title :: 
+
+# Frequency Spectrum 
+
+:: content ::
+
+<img src="./images/lec2-freq-sinewaves4.png" />
+
+Done using <span class="text-blue-500"> Discrete Fourier Transform </span>
+
+
+---
+layout: four-cell
+---
+
+:: top-left ::
+
+<img src="./images/lec2-freq-sinewaves.png" />
+
+:: bottom-left ::
+
+<img src="./images/lec2-freq-sinewaves3.png" />
+
+:: top-right ::
+
+<img src="./images/lec2-freq-sinewaves2.png"  />
+
+:: bottom-right ::
+
+<img src="./images/lec2-freq-sinewaves4.png" />
+
+---
+layout: side-title
+titlewidth: is-3
+---
+
+:: title :: 
+
+# Frequency Bands
+
+:: content :: 
+
+- Phones have characteristic spectral _signatures (Spectral peaks)_
+
+- Inner ear computes the spectrum of the incoming waveform
+
+- Spectrogram for three vowels
+  
+![](./images/lec2-freq-sinewaves6.png)
+
+<!-- dark is more important because amplitude for white region is almost zero -->
+<!-- which frequency range the dark area is -->
+
+- Each dark bar is called a **formant** which is a frequency band that is particularly amplified by the vocal tract
+
+
+
+---
+layout: center
+titlewidth: is-3
+---
+
+![](./images/lec2-vowel-spectrum.png){margin:auto;width:50%}
+
+---
+layout: image-right
+image: ./images/lec2_ear.png
+---
+
+
+# Issues with Hz
+
+- Human hearing is less sensitive at higher frequencies
+- The difference at low frequencies 50 Hz to 550 Hz is a massive change in perceived pitch
+- However, the difference at high frequencies 13kHz to 15kHz is not a significant change in perceived pitch
+
+- Information in low frequencies (like formants) is crucial for distinguishing vowels or nasals
+- Modeling this human perceptual property improves speech recognition performance in the same way
+
+---
+layout: top-title-two-cols
+columns: is-6
+align: l-lt-cm
+---
+
+:: title :: 
+
+# Mel to the Rescue 
+
+:: left :: 
+
+- Designed to match human perception of pitch: how humans _perceive_ sound at different frequencies
+- Equal intervals in mels represent equal perceived distances between pitches to a human listener
+- The scale is anchored at 1000 Hz being equal to 1000 mels
+- Below approximately 500 Hz, the mel and Hz scales are roughly equivalent
+
+  $mel(f) = 2595 \log(1+\frac{f}{700})$
+
+:: right :: 
+
+![alt text](./images/lec2-mel-hz.png)
 
 ---
 layout: center
