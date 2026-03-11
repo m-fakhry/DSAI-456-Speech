@@ -29,7 +29,7 @@ Week| Date |Topic | Contents | Lecture | Assignment
 2| 02-17 | Foundations and Acoustic Features | What is speech recognition, phonetics and signals, frequency, amplitude, period, analog to digital, sampling and quantization, pitch, intensity, discrete and fast Fourier transform,  time and frequency domain, freq spectrum, spectrogram, Mel scale  | [Lecture 1](lectures/lec1.md) | [Assignment 1](assignments/assign1.md) 
 3| 02-24 | Acoustic Features | Discrete and fast Fourier transform, time and frequency domain, freq spectrum, spectrogram, Mel scale, Mel filter bank, windowing, MFCC | [Lecture 2](lectures/lec2.md) | [Assignment 2](assignments/assign2.md) 
 4| 03-03 | GMM | Definition of Gaussian, univariate distribution, one distribution for each class, GMM | [Lecture 3](lectures/lec3.md) | No assignment 
-5| 03-10 | | | | 
+5| 03-10 | GMM | difference between univariate and multivariate, single and mixture of distribution, distribution for each class, number of mixtures for each class | [Lecture 4](lectures/lec4.md) | [Assignment 3](assignments/assign3.md) 
 6| 03-17 | | | | 
 7| 03-24 | Eid? | | | 
 8| 03-31 | Midterm? | | | 
