@@ -33,9 +33,9 @@ Week| Date |Topic | Contents | Lecture | Assignment
 6| 03-17 | GMM + HMM | EM algorithm, problems of HMM, Evaluation problem| [Lecture 5](lectures/lec5.md) | [Assignment 4](assignments/assign4.md)
 7| 03-24 | Eid | | | 
 8| 03-31 | Midterm | | | 
-9| 04-07 | | | | 
+9| 04-07 | Midterm review | reviewing the midterm exam |  | [Assignment 5](assignments/assign5.md)
 10| 04-14 | | | | 
-11| 04-21 | | | | 
+11| 04-21 | Quiz | | | 
 12| 04-28 | | | | 
 13| 05-05 | | | | 
 14| 05-12 | | | | 
