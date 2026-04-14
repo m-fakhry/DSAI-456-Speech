@@ -34,11 +34,11 @@ Week| Date |Topic | Contents | Lecture | Assignment
 7| 03-24 | Eid | | | 
 8| 03-31 | Midterm | | | 
 9| 04-07 | Midterm review | reviewing the midterm exam |  | [Assignment 5](assignments/assign5.md)
-10| 04-14 | | | | 
-11| 04-21 | Quiz | | | 
-12| 04-28 | | | | 
-13| 05-05 | | | | 
-14| 05-12 | | | | 
+10| 04-14 | Forward | | | 
+11| 04-21 | Decoding + Quiz | | | 
+12| 04-28 | Lab Quiz + CTC | | | 
+13| 05-05 | Encodec + VALLE | | | 
+14| 05-12 | Lab Final | | | 
 15| 05-19 | Prepare for Final | | |  
 
 Please note that the syllabus content is subject to change throughout the semester. Topics may be added or removed based on the instructor’s discretion, student progress, and available time. Your feedback and participation will inform these adjustments to ensure alignment with course goals and schedule constraints.
