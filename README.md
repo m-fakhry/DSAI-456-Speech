@@ -35,9 +35,9 @@ Week| Date |Topic | Contents | Lecture | Assignment
 8| 03-31 | Midterm | | | 
 9| 04-07 | Midterm review | reviewing the midterm exam |  | [Assignment 5](assignments/assign5.md)
 10| 04-14 | HMM | Direct computation, the forward algorithm | [Lecture 6](lectures/lec6.md)  | [Assignment 6](assignments/assign6.md)
-11| 04-21 | Decoding + Quiz | | | 
-12| 04-28 | Lab Quiz + CTC | | | 
-13| 05-05 | Encodec + VALLE | | | 
+11| 04-21 | Quiz | lecture quiz + review the quiz | No lecture | No assignment  
+12| 04-28 | Lab Quiz + Decoding | Decoding (Habiba Ayman?) | | 
+13| 05-05 | CTC + Encodec + VALLE | | | 
 14| 05-12 | Lab Final | | | 
 15| 05-19 | Prepare for Final | | |  
 
