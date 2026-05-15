@@ -27,170 +27,164 @@ layout: fact
 # Recording is NOT allowed 
 
 ---
-layout: top-title-two-cols
-align: l-lt-cm
-columns: is-6
+layout: top-title
 ---
 
 :: title :: 
 
-# Lecture 7 Recap 
+# Speech Tasks
 
-:: left :: 
+:: content :: 
 
-- HMM : sequence of observed and hidden states
-- HMM model $\lambda = (A, B, \pi)$
-- Problems
-  - **Evaluation**: $p(O ∣ \lambda)$
-    - Direct Computation $O(TN^T)$
-    - Forward Algorithm $O(TN^2)$
-  - **Decoder**: $p(Q | O, \lambda)$
-  - **Learning**: $\argmax_{\lambda} p(O|\lambda)$
+<v-clicks>
 
-:: right :: 
+- **ASR** (Automatic Speech Recognition): maps speech to text 
+- **TTS** (Text To Speech): maps text to speech (speech synthesis)
+  - Zero-shot TTS. synthesis voice for **unseen** talker 
+- TTS Components
+  - Audio tokenizer: neural audio codecs
+  - Conditional language model: generation part 
 
-![](./images/lec5_hmm.png)
+- Codec 
+  - a mechanism for encoding analog speech signals into a digitized compressed representation
+  - speech to digitized **tokens** (tokenizer)
+
+</v-clicks>
+
+---
+layout: cover
+class: text-center
+---
+
+# High Fidelity Neural Audio Compression
+Alexandre Défossez, Jade Copet, Gabriel Synnaeve, Yossi Adi 
+
+2023
+
+---
+layout: top-title 
+class: text-center
+---
+
+:: title :: 
+
+# EnCodec: A State-of-the-Art Real-Time Neural Codec
+
+:: content :: 
+
+<div style="margin-top: 0px;">
+    <img src="./images/10_arch.png"/>
+</div>
 
 ---
 layout: top-title
 ---
 
-:: title ::
+:: title :: 
 
-# The Backward Algorithm of HMM
+# Motivation
 
-:: content ::
+:: content :: 
 
-- The backward algorithm helps evaluate the probability of the ending partial observation sequence, given state $i$ at time $t$.
-
-<v-click>
-
-- Define:
-
-$$
-\beta_t(i) = P(o_{t+1}, o_{t+2}, \ldots, o_T \mid q_t = i, \lambda)
-$$
-
-which is the probability of observing the partial sequence from $t+1$ to $T$ given state $i$ at time $t$.
-
-</v-click>
-
----
-
-<v-click>
-
-- Initialization at $t = T$ (end time):
-
-$$
-\beta_T(i) = 1, \quad \forall i = 1, 2, \ldots, N
-$$
-
-since after the last observation, the probability of the empty future observation sequence is 1.
-
-</v-click>
-
-<v-click>
-
-- Recursion for $t = T-1, T-2, \ldots, 1$:
-
-$$
-\beta_t(i) = \sum_{j=1}^N a_{ij} b_j(o_{t+1}) \beta_{t+1}(j)
-$$
-
-where $a_{ij}$ is the state transition probability from state $i$ to $j$, and $b_j(o_{t+1})$ is the emission probability of observing $o_{t+1}$ in state $j$.
-
-</v-click>
-
-<v-click>
-
-- Termination step:
-
-$$
-P(O \mid \lambda) = \sum_{i=1}^N \pi_i b_i(o_1) \beta_1(i)
-$$
-
-which sums over initial states weighted by initial probabilities $\pi_i$, emission probabilities, and the backward probabilities.
-
-</v-click>
-
----
-
-<v-click>
-
-- The backward algorithm runs in time $O(N^2 T)$ and complements the forward algorithm for smoothing tasks and parameter estimation.
-
-</v-click>
+- EnCodec seeks to solve the challenge of achieving **very low bitrate compression with high fidelity**
+  - Bitrate refers to the amount of data used per unit of time (for audio)  
+  - High fidelity means the compressed data, when decompressed, minimizes the loss of sound quality
 
 ---
 layout: top-title
 ---
 
-:: title ::
+:: title :: 
 
-# Baum-Welch Algorithm - Training the HMM
+
+# EnCodec Model Architecture
+
+:: content :: 
+
+The system is composed of three main components, trained end-to-end:
+
+1.  **Encoder ($E$):** Inputs audio ($x$) and outputs a latent representation ($z$)
+2.  **Quantization Layer ($Q$):** Produces a compressed representation ($z_q$) using **Vector Quantization**
+3.  **Decoder ($G$):** Reconstructs the time-domain signal ($\hat{x}$) from $z_q$
+
+<div style="margin-top: 0px;">
+    <img src="./images/10_arch.png" width="60%" style="display: block; margin: 0 auto;"/>
+</div>
+
+---
+layout: top-title
+---
+
+:: title :: 
+
+# Encoder/Decoder
+
+:: content :: 
+
+- The encoder uses 1D convolutions, residual units, down-sampling layers, and a **two-layer LSTM for sequence modeling** 
+- The decoder mirrors this using transposed convolutions
+
+<div style="margin-top: 0px;">
+    <img src="./images/10_enc_dec.png" width="55%" style="display: block; margin: 0 auto;"/>
+</div>
+
+
+---
+layout: top-title
+---
+
+:: title :: 
+
+# Vector Quantization
 
 :: content ::
 
-- The Baum-Welch algorithm solves the learning problem of finding unknown model parameters $\lambda = (A, B, \pi)$ given observed data $O$.
-
-<v-click>
-
-- It is a special case of the Expectation-Maximization (EM) algorithm that uses the forward-backward procedure to estimate expected sufficient statistics.
-
-- Define the forward variables $\alpha_t(i)$ and backward variables $\beta_t(i)$ for each time $t$ and state $i$ (see previous slides).
-
-</v-click>
-
----
-
-<v-click>
-
-- Compute the $\gamma$ variables:
-
-$$
-\gamma_t(i) = P(q_t = i \mid O, \lambda) = \frac{\alpha_t(i) \beta_t(i)}{\sum_{j=1}^N \alpha_t(j) \beta_t(j)}
-$$
-
-which represent the posterior probability of being in state $i$ at time $t$.
-
-</v-click>
-
-<v-click>
-
-- Compute the $\xi$ variables, joint posterior of being in state $i$ at $t$ and state $j$ at $t+1$:
-
-$$
-\xi_t(i,j) = P(q_t = i, q_{t+1} = j \mid O, \lambda) = \frac{\alpha_t(i) a_{ij} b_j(o_{t+1}) \beta_{t+1}(j)}{\sum_{i=1}^N \sum_{j=1}^N \alpha_t(i) a_{ij} b_j(o_{t+1}) \beta_{t+1}(j)}
-$$
-
-</v-click>
+- Run a big set of speech wavefiles through an encoder to generate $N$ vectors, each one corresponding
+to some frame of speech
+- Then cluster all these $N$ vectors into $k$ clusters 
+- Use iterative k-means algorithm to learn the clusters
+- The codeword can be fed to the decoder
+  
+<div style="margin-top: 0px;">
+    <img src="./images/10_quant.png" width="45%" style="display: block; margin: 0 auto;"/>
+</div>
 
 ---
+layout: top-title
+---
 
-<v-click>
+:: title :: 
 
-- Update parameters using the expected counts:
+# Residual Vector Quantization
 
-$$
-\begin{aligned}
-\pi_i^{new} &= \gamma_1(i) \\
-a_{ij}^{new} &= \frac{\sum_{t=1}^{T-1} \xi_t(i,j)}{\sum_{t=1}^{T-1} \gamma_t(i)} \\
-b_j^{new}(k) &= \frac{\sum_{t=1}^{T} \textbf{1}_{\{o_t = v_k\}} \gamma_t(j)}{\sum_{t=1}^{T} \gamma_t(j)}
-\end{aligned}
-$$
+:: content :: 
 
-where $v_k$ is the observation symbol $k$.
+- RVQ computes the residual after quantization and quantizes it with subsequent codebooks
+- This method allows a single model to support **multiple bandwidth targets** by selecting a variable number of residual steps
+- *Example:* At 24 kHz, training supports bandwidths including 1.5, 3, 6, 12, and 24 kbps
 
-</v-click>
+<div style="margin-top: 0px;">
+    <img src="./images/10_rvq.png" width="80%" style="display: block; margin: 0 auto;"/>
+</div>
 
-<v-click>
 
-- Repeat these E and M steps iteratively until convergence to locally maximize $P(O \mid \lambda)$.
+---
+layout: top-title
+---
 
-- The Baum-Welch algorithm efficiently trains HMM parameters from data, enabling practical applications like speech recognition.
+:: title :: 
 
-</v-click>
+# Loss
 
+:: content :: 
+
+- Encoder ($E$) to RVQ ($Q$) to Decoder ($G$)
+- Reconstruction losses ($\mathcal{L}_t, \mathcal{L}_f$): time and a frequency domain loss
+- Adversarial losses ($\mathcal{L}_g, \mathcal{L}_d$)
+
+<div style="margin-top: 0px;">
+    <img src="./images/10_desc.png" width="80%" style="display: block; margin: 0 auto;"/>
+</div>
 
 ---
 layout: center
