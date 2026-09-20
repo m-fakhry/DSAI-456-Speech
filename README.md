@@ -54,7 +54,7 @@ Please note that the syllabus content is subject to change throughout the semest
 
 Week| Date |Topic | Contents | Paper | CLO | Lecture | Assignment
 ---|---|---|---|---|---|---|---
-1 | 09-21 | Intro | General introduction to the course. WER/CER metrics. |  Browse [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) as a benchmark | 6 | |
+1 | 09-21 | Intro | General introduction to the course. WER/CER metrics. |  Browse [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) as a benchmark | 6 | [Lecture 1](lectures/lecture1.md) | [Assignment 1](assignments/assignment1.md)
 2 | 09-28 | Foundations | Formants, quantization, framing, F0 and intensity, spectrogram, sampling and Nyquist.  | Ch. 16.1-16.2 | 1 | | 
 3 | 10-05 | Spectral Front End | DFT/FFT, windowing and spectral leakage, time-frequency resolution, STFT and spectrogram, mel filterbank, log-mel. MFCC | Ch. | 1, 2 | | 
 4 | 10-12 | Alignment & Decoding | The alignment problem, HMM, forward algorithm, Viterbi, GMM as a density model.| [Rabiner (1989), _A Tutorial on Hidden Markov Models_](https://ieeexplore.ieee.org/document/18626) | 3 | | **Project proposal**
