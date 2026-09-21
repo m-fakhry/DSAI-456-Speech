@@ -109,9 +109,9 @@ Topic| Percentage | Notes
 ---|---|---
 Lab Assignments | 20% | Graded in lab with your TA
 Lab Quizzes | 10% | Weeks 6 and 12
-Class Project | 25% | Distributed across the four milestones
-Midterm | 15% | Covers weeks 1-7, including questions on the assigned papers
-Final | 30% | Includes question on the assigned papers
+Class Project | 20% | Distributed across the four milestones
+Midterm | 10% | Covers weeks 1-7, including questions on the assigned papers
+Final | 40% | Includes question on the assigned papers
 
 ---
 
