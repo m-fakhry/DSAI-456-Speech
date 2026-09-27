@@ -44,7 +44,7 @@ title: Today
 
 - **Linguistic units**: syllable, vowel, consonant
 - **Acoustics**: waveform, amplitude, frequency, Hertz, period
-- **Digitization**: sampling, quantization, framing
+- **Digitization**: sampling, Nyquist and aliasing, quantization, framing
 - **Describing the signal**: pitch, loudness, intensity, F0
 - **Formants**: why vowels sound different
 - **Spectrogram**: putting all of it into one picture
@@ -92,11 +92,11 @@ title: Syllable structure
 
 :: content ::
 
-- A **syllable** is a single unbroken unit of spoken sound that contains exactly **one vowel** sound, with or without surrounding consonant sounds.
-- The vowel at the core is the **nucleus** (every syllable has exactly one); consonants before it are the **onset**, after it the **coda**. Nucleus + coda = the **rime**.
-- <span dir="rtl" lang="ar" class="font-bold">مَدْرَسَة</span> (madrasa) splits into onset·nucleus syllables just like "banana" does.
+- A **syllable** is a single unbroken unit of spoken sound built around exactly **one nucleus**, usually a vowel, with or without surrounding consonant sounds.
+- The **nucleus** is the core (every syllable has exactly one); consonants before it are the **onset**, after it the **coda**. Nucleus + coda = the **rime**. The nucleus can also be a consonant: *button*.
+- Examples: "banana" and <span dir="rtl" lang="ar" class="font-bold">مَدْرَسَة</span> (madrasa).
 
-<img src="./images/lec2_syllable.png" class="w-full mt-3" style="max-height: 260px; object-fit: contain;" />
+<img src="./images/lec2_syllable.png" class="w-full mt-3" style="max-height: 200px; object-fit: contain;" />
 
 ---
 layout: top-title-two-cols
@@ -114,7 +114,7 @@ title: Vowel vs consonant
 
 ## Vowels
 
-- Open vocal tract, no major obstruction — always voiced.
+- Open vocal tract, no major obstruction; normally voiced (exceptions: whispered vowels, and devoiced vowels such as the final *u* in Japanese *desu*).
 - Carry the syllable nucleus; tend to be louder and longer.
 
 <AdmonitionType type='important'>
@@ -158,14 +158,15 @@ title: Waveform
 
 - Speech is air pressure changing over time. The **waveform** plots that pressure (y-axis) against time (x-axis).
 - A pure tone is a sine wave: $y = A \sin(2\pi f t)$
-- Real speech is a sum of many such waves at once — that's what makes it look messy, not random.
+- **Voiced** speech (vowels, nasals) is a sum of many such waves at once: messy-looking, but not random, because it repeats.
+- **Voiceless** sounds (/s/, /f/, bursts, aspiration) are aperiodic noise: they really are random-looking.
 - Silence, a vowel, and a consonant each leave a visually distinct signature.
 
 :: right ::
 
 <img src="./images/lec2_waveform_cat.png" class="w-full" />
 
-Idealized waveform for **"cat"**: burst (/k/), a periodic, voiced stretch (/æ/), then a second burst (/t/).
+Idealized waveform for **"cat"**: the /k/ burst and aspiration (aperiodic noise) run straight into the periodic, voiced /æ/; then silence while the tongue closes for /t/, and its release burst.
 
 ---
 layout: top-title
@@ -182,9 +183,10 @@ title: Amplitude
 
 - **Amplitude** is the size of the pressure swing — how far the waveform deflects from zero.
 - Larger amplitude → louder sound (we'll formalize "loud" as intensity shortly).
-- The same word, spoken loud vs. soft, has the same *shape* but a different *scale*.
+- Turning a **volume knob** only rescales the waveform: same *shape*, different *size*.
+<!-- - A **speaker** talking louder changes more than size: vocal effort raises F0 and F1, flattens the spectral tilt (sharper pulses, more high-frequency energy), and lengthens vowels, automatically so in noise (the **Lombard effect**). Gain normalization can't undo that. -->
 
-<img src="./images/lec2_amplitude.png" class="w-full mt-2" style="max-height: 260px; object-fit: contain;" />
+<img src="./images/lec2_amplitude.png" class="w-full mt-2" style="max-height: 190px; object-fit: contain;" />
 
 ---
 layout: top-title-two-cols
@@ -204,7 +206,7 @@ title: Frequency, Hz, period
 - **Hertz (Hz)**: the unit of frequency — 1 Hz = 1 cycle/second.
 - **Period** ($T$): the time for *one* cycle to complete: $T = 1/f$.
 - A pure 440 Hz tone repeats every $1/440 \approx 2.27$ ms.
-- Speech is **not** a pure tone — it's periodic-*ish*, a sum of a fundamental frequency plus its harmonics (multiples of it).
+- Voiced speech is **not** a pure tone: it's quasi-periodic, a fundamental frequency plus harmonics at integer multiples of it. Voiceless sounds (/s/, /f/) have no period at all.
 
 :: right ::
 
@@ -235,14 +237,34 @@ title: Sampling
 :: content ::
 
 - The waveform is **continuous** — infinitely many values in any interval. A computer can't store that, so **sampling** measures the amplitude at regular intervals and keeps only those points.
-- **Sampling rate**: samples/second (Hz). Microphone data: **16 kHz**; telephone speech: **8 kHz**.
-- Sampling too slowly creates a false lower-frequency wave (aliasing), and it causes audible distortion.
-
-<img src="./images/lec2_aliasing.png" class="w-full mt-2" style="max-height: 230px; object-fit: contain;" />
+- **Sampling rate** $f_s$: samples/second (Hz).
+  - Phones and laptops typically record at **44.1 or 48 kHz**. 
+  - Most ASR models expect **16 kHz** (wideband speech).
+  - Telephone speech: **8 kHz** (narrowband, roughly 300–3400 Hz passes).
+- A sampling rate can only represent frequencies below **half** of it (next slide).
 
 <AdmonitionType type='important'>
-Sample fast enough to capture the frequencies that matter — mostly below 8 kHz for speech intelligibility, which is why 16 kHz is standard.
+16 kHz keeps everything below 8 kHz, which covers the frequencies that matter most for intelligibility. That's why it's the ASR standard.
 </AdmonitionType>
+
+---
+layout: top-title
+color: light
+align: lt
+title: Nyquist and aliasing
+---
+
+:: title ::
+
+# Nyquist and Aliasing
+
+:: content ::
+
+- **Nyquist rule**: to represent a frequency $f_{max}$ you need $f_s > 2 f_{max}$. Equivalently, $f_s/2$ (the **Nyquist frequency**) is the highest frequency a sampling rate can hold.
+- A component above $f_s/2$ doesn't disappear: it **folds** to $|f - k \cdot f_s|$ (the nearest multiple $k$ of $f_s$), a false lower-frequency wave. That is **aliasing**.
+- In the figure: $f_s = 11$ Hz, so Nyquist is 5.5 Hz, and the 9 Hz wave shows up as $|9 - 11| = 2$ Hz.
+
+<img src="./images/lec2_aliasing.png" class="w-full mt-2" style="max-height: 170px; object-fit: contain;" />
 
 
 ---
@@ -260,7 +282,7 @@ title: Quantization
 
 - Bit: the basic unit of digital storage — a single binary digit, either 0 or 1. n bits can represent 2ⁿ distinct values, so more bits = more possible amplitude levels to round to. 
 - Bit depth is simply how many bits are used per sample.
-- Quantization measures how precisely each amplitude is rounded to one of a fixed number of levels, set by the **bit depth**.
+- **Quantization** rounds each sample's amplitude to the nearest of a fixed number of levels, set by the **bit depth**.
 - 16-bit audio → 65,536 levels, rounding error (**quantization noise**) far too small to hear.
 - Fewer bits → fewer levels → a visible "staircase" and audible noise.
 
@@ -282,9 +304,9 @@ title: Framing
 
 - Speech is **non-stationary** — its frequency content changes constantly, but most analysis techniques (starting next week: DFT/FFT) assume the signal is stationary over the window they look at.
 - Solution: **framing** — cut the signal into short, overlapping windows (~25 ms, sliding by ~10 ms), short enough to look roughly stationary inside each one.
-- Overlap ensures we don't miss anything that falls near a frame boundary.
+- Each frame is multiplied by a **window** (e.g., Hamming) that fades its edges toward zero; overlap gives samples near one frame's edge full weight in the next frame.
 
-<img src="./images/lec2_framing.png" class="w-full mt--1" />
+<img src="./images/lec2_framing.png" class="w-full mt--3" />
 
 <AdmonitionType type='tip'>
 "Frame length and hop size" reappear in exactly this form for STFT and MFCCs next week.
@@ -315,16 +337,17 @@ title: Pitch, loudness, intensity
 
 :: content ::
 
-- **Intensity**: the physical energy of the sound wave — proportional to amplitude squared ($I \propto A^2$). Measured in decibels (dB).
+- **Intensity**: the power per unit area carried by the sound wave, proportional to amplitude squared ($I \propto A^2$), in decibels relative to a reference (dB SPL in air). 
 - **Loudness**: our *perception* of intensity. Related to intensity, but not identical — perception is nonlinear and frequency-dependent.
 - **Pitch**: our *perception* of frequency — how high or low a sound seems. Related to frequency, but subjective.
 
 <!-- :: right :: -->
 
-- **F0 (fundamental frequency)**: the physical measurement most closely underlying perceived pitch — the lowest, dominant frequency of a periodic waveform (the rate the vocal folds vibrate at).
+- **F0 (fundamental frequency)**: the physical measurement most closely underlying perceived pitch: the repetition rate of a periodic waveform ($1/T$), i.e., the rate the vocal folds vibrate at. 
+  <!-- Harmonics sit at integer multiples of F0; F0 itself need not be the strongest component, or even present (telephone speech cuts below ~300 Hz, yet a ~110 Hz male pitch is still heard: the **missing fundamental**). -->
 
 <AdmonitionType type='note'>
-Keep the pattern straight: <strong>F0/intensity</strong> are what we measure from the signal; <strong>pitch/loudness</strong> are what a listener experiences. They correlate strongly but are not the same thing.
+<strong>F0/intensity</strong> are what we measure from the signal; <strong>pitch/loudness</strong> are what a listener experiences. They correlate strongly but are not the same thing.
 </AdmonitionType>
 
 ---
@@ -342,8 +365,9 @@ title: F0 contour
 
 - F0 isn't a single number for a whole utterance — it changes continuously. Tracking it frame-by-frame gives a **pitch contour** (or **pitch track**).
 - The same words, said with a different pitch contour, can mean something different.
+- F0 exists only where the vocal folds vibrate: the track **breaks** at the voiceless /k/ of "coming". That gap is exactly the voiced/unvoiced marking you'll do in Assignment 2.
 
-<img src="./images/lec2_f0_contour.png" class="w-full mt-3" style="max-height: 280px; object-fit: contain;" />
+<img src="./images/lec2_f0_contour.png" class="w-full mt-2" style="max-height: 170px; object-fit: contain;" />
 
 <AdmonitionType type='note'>
 <strong>RMS (root-mean-square) amplitude</strong> — the standard frame-level measurement of intensity, computed the same frame-by-frame way as F0.
@@ -374,7 +398,7 @@ title: Source-filter model
 
 :: content ::
 
-- **Source**: the vocal folds vibrate, producing a buzz-like sound rich in harmonics (multiples of F0).
+- **Source**: in voiced sounds, the vocal folds vibrate, producing a buzz-like sound rich in harmonics (multiples of F0). In voiceless sounds, the source is turbulent **noise** at a constriction (/s/, /f/, aspiration, bursts), with no F0 at all. Voiced fricatives (/z/, /v/) use both sources at once.
 - **Filter**: the vocal tract (throat, mouth, nose) is a resonant cavity whose *shape* — set by tongue position, jaw, lips — amplifies some frequencies and damps others.
 - Change the vocal tract shape (move your tongue) without changing the source (F0), and you change which frequencies come through loudest — that's what turns the same buzz into different vowels.
 - The frequencies the vocal tract resonates at, and therefore amplifies, are called **formants**.
@@ -384,9 +408,10 @@ Say "ee" then "ah" while gently touching your throat — the buzz (source) barel
 </AdmonitionType>
 
 ---
-layout: top-title
+layout: top-title # -two-cols
 color: light
-align: lt
+columns: is-7
+# align: l-lt-cm
 title: F1 and F2
 ---
 
@@ -396,11 +421,15 @@ title: F1 and F2
 
 :: content ::
 
-- Formants are numbered by frequency, lowest first: **F1** is the vocal tract's *lowest* resonant frequency, **F2** the *next* one up (F3, F4, … exist too, but F1/F2 carry most of the information that distinguishes vowels).
-- On a spectrogram, formants appear as the darkest horizontal bands above F0 — literally the frequency ranges the vocal tract let through the loudest.
-- **F1 correlates with tongue height**: high tongue (e.g. "ee") → low F1; low tongue (e.g. "ah") → high F1.
-- **F2 correlates with tongue frontness/backness**: front tongue (e.g. "ee") → high F2; back tongue (e.g. "oo") → low F2.
-- This means F1/F2 aren't arbitrary numbers — they're a direct readout of where your tongue was.
+- **F1** is the vocal tract's *lowest* resonance, **F2** the *next* one up; they carry most of what distinguishes vowels.
+<!-- - On a spectrogram: dark horizontal bands. They're resonances of the filter, not harmonics, so they don't depend on F0, and needn't lie above it (a child's F0 can reach the F1 of /i/). -->
+- **F1 ↔ tongue height**: high ("ee") → low F1; low ("ah") → high F1.
+- **F2 ↔ frontness**: front ("ee") → high F2; back ("oo") → low F2. **Lip rounding** also lowers F2.
+<!-- - **Not a direct readout**: a shorter vocal tract raises *every* formant (women, children), and different articulations can give the same formants. Hence speaker normalization in ASR (e.g., VTLN). -->
+
+<!-- :: right ::
+
+<img src="./images/lec2_formant_vowel_space.png" class="w-full" /> -->
 
 
 ---
@@ -427,11 +456,10 @@ title: Spectrogram
 
 :: content ::
 
-<img src="./images/lec2_spectrogram_banana.png" class="w-full mt-1" style="max-height: 270px; object-fit: contain;" />
+<img src="./images/lec2_spectrogram_banana.png" class="w-full mt-1" style="max-height: 235px; object-fit: contain;" />
 
-- A **spectrogram** is a picture of sound: time on the x-axis, frequency on the y-axis, darkness/color showing energy.
-- Readable in one picture: **voiced** regions (formant bands, dark low down), **bursts** (a vertical smear), **silence** (blank), **formants** (dark horizontal bands — F1 low, F2 above).
-
+- A **spectrogram** is a picture of sound: time on the x-axis, frequency on the y-axis, darkness showing energy (Praat's grayscale; in color maps such as magma, *brighter* = more energy).
+- **Vowels**: vertical lines (one for each vocal cord vibration) with thick dark horizontal stripes (**formant**) showing the main pitch levels (F1 low, F2 above). **Nasal** still voiced but weaker, energy mostly in a low band near 250 Hz, with no burst or silence. **Bursts**: a thin vertical smudge (the /b/ here is short and weak). **Silence**: blank space.
 
 ---
 layout: section
@@ -455,11 +483,11 @@ title: Summary
 
 :: content ::
 
-- A syllable is onset + nucleus (vowel) + coda; vowels are open and voiced, consonants involve some constriction.
-- Waveform = pressure over time; amplitude = size of the swing; frequency (Hz) = cycles/second; period = 1/frequency.
-- **Sampling** discretizes time (16 kHz standard; too slow → aliasing). **Quantization** discretizes amplitude (16-bit standard). **Framing** cuts the signal into short, near-stationary windows.
+- A syllable is onset + nucleus (usually a vowel) + coda; vowels are open and normally voiced, consonants involve some constriction.
+- Waveform = pressure over time; amplitude = size of the swing; frequency (Hz) = cycles/second; period = 1/frequency. Voiced sounds are quasi-periodic; voiceless sounds are noise.
+- **Sampling** discretizes time: $f_s$ must exceed twice the highest frequency (Nyquist); 16 kHz is the ASR standard. **Quantization** discretizes amplitude (16-bit standard). **Framing** cuts the signal into short, near-stationary windows.
 - Intensity/F0 are physical measurements; loudness/pitch are what we perceive.
-- **F1** tracks tongue height, **F2** tracks tongue frontness — together they place a vowel in the vowel space, all visible at once in a **spectrogram**.
+- **F1** mostly tracks tongue height, **F2** frontness (and lip rounding); vocal tract length shifts them all. Together they place a vowel in the vowel space, all visible at once in a **spectrogram**.
 
 Next week: how a spectrogram is actually computed — DFT, FFT, windowing, and the mel scale.
 
@@ -478,10 +506,12 @@ title: Assignment 2
 
 Go back to **your own Assignment 1 recording** (the sentence you recorded and computed WER on).
 
-1. **Plot it**: waveform, short-time (RMS) energy/intensity, and F0 contour. Mark voiced vs. unvoiced regions.
-2. **Measure formants**: pick 2–3 vowels, measure F1/F2 (librosa).
+1. **Plot it**: Mark voiced vs. unvoiced regions.
+2. **Measure formants**: pick 2–3 vowels, measure F1/F2 with Praat; librosa has no formant tracker.
 3. **Annotate a spectrogram** by hand — mark formant bands, bursts, and silence.
-4. **Degrade it**: downsample (16k → 8k → 4k) and requantize (16-bit → 8-bit → 4-bit); re-run each through your Assignment 1 ASR system and recompute WER.
+4. **Degrade it**, re-run each version through your Assignment 1 ASR system, and recompute WER. First resample your recording (probably 44.1/48 kHz) to 16 kHz.
+   - **Downsample** 16k → 8k → 4k.
+   - **Requantize** 16 → 8 → 4 bit.
 5. **Report**: plot WER vs. sampling rate / bit depth. Where does degradation become *audible*, and where does the ASR system actually *break*? Do those points coincide?
 
 ---
