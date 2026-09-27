@@ -29,7 +29,7 @@ Book | "_Speech and Language Processing_", Jurafsky and Martin, 3rd Edition, 202
 Supplementary | [HuggingFace Audio Course](https://huggingface.co/learn/audio-course)
 Objective | Provide students with the theory and practical skills to build, adapt, and evaluate modern speech systems (recognition and synthesis), and to read the current literature critically
 Prerequisites | Deep Learning
-Tools/APIs | [librosa](https://librosa.org/doc/latest/index.html), [HuggingFace Transformers](https://github.com/huggingface/transformers) + [PEFT](https://github.com/huggingface/peft). Optional: [openSmile](https://audeering.github.io/opensmile/), [torchaudio](https://github.com/pytorch/audio), [NeMo](https://github.com/NVIDIA/NeMo) or [ESPnet](https://github.com/espnet/espnet)
+Tools/APIs | [WASP](https://www.speechandhearing.net/laboratory/wasp/), [librosa](https://librosa.org/doc/latest/index.html), [HuggingFace Transformers](https://github.com/huggingface/transformers) + [PEFT](https://github.com/huggingface/peft). Optional: [openSmile](https://audeering.github.io/opensmile/), [torchaudio](https://github.com/pytorch/audio), [NeMo](https://github.com/NVIDIA/NeMo) or [ESPnet](https://github.com/espnet/espnet)
 
 ---
 
@@ -55,7 +55,7 @@ Please note that the syllabus content is subject to change throughout the semest
 Week| Date |Topic | Contents | Paper | CLO | Lecture | Assignment
 ---|---|---|---|---|---|---|---
 1 | 09-21 | Intro | General introduction to the course. WER/CER metrics. |  Browse [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) as a benchmark | 6 | [Lecture 1](lectures/lecture1.md) | [Assignment 1](assignments/assignment1.md)
-2 | 09-28 | Foundations | Formants, quantization, framing, F0 and intensity, spectrogram, sampling and Nyquist.  | Ch. 16.1-16.2 | 1 | | 
+2 | 09-28 | Foundations | Formants, quantization, framing, F0 and intensity, spectrogram, sampling.  | Ch. 16.1-16.2 |  1 | [Lecture 2](lectures/lecture2.md) | [Assignment 2](assignments/assignment2.md)
 3 | 10-05 | Spectral Front End | DFT/FFT, windowing and spectral leakage, time-frequency resolution, STFT and spectrogram, mel filterbank, log-mel. MFCC | Ch. | 1, 2 | | 
 4 | 10-12 | Alignment & Decoding | The alignment problem, HMM, forward algorithm, Viterbi, GMM as a density model.| [Rabiner (1989), _A Tutorial on Hidden Markov Models_](https://ieeexplore.ieee.org/document/18626) | 3 | | **Project proposal**
 5 | 10-19 | CTC | Blank symbol, collapse function, summing over alignments, forward-backward, prefix beam search, shallow LM fusion | [Graves et al. (2006), _Connectionist Temporal Classification_](https://www.cs.toronto.edu/~graves/icml_2006.pdf) | 3, 4 | | 
