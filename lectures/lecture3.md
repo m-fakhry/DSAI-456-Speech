@@ -118,8 +118,8 @@ title: The DFT
 
 $$X[k] = \sum_{n=0}^{N-1} \underbrace{x[n]}_{\text{frame of } N \text{ samples}} \cdot \underbrace{e^{-j 2\pi k n / N}}_{\text{probe wave: } k \text{ cycles per frame}}$$
 
-- **Read it as**: multiply frame and probe sample by sample, then add up: a **large** sum if the frame contains that frequency; otherwise they cancel (exactly, for a whole number of cycles; see *leakage*).
-- $|X[k]|$ = **how much** of that frequency is present; the angle of $X[k]$ = its **phase**.
+- **Read it as**: multiply frame and probe sample by sample, then add up: a **large** sum if the frame contains that frequency; otherwise they cancel.
+- $|X[k]|$ = **how much** of that frequency is present.
 
 <img src="./images/lec3_dft_probe.png" class="w-full mt-1" style="max-height: 180px; object-fit: contain;" />
 
