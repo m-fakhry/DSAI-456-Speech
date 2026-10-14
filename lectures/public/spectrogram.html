@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spectrogram Compare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a lab bench with two recording strips (A above B) that share one time axis,
+   so a slow and a fast word line up frame by frame. Plates stay white like printed figures. */
+:root {
+  --bench: #eef1f5;
+  --strip: #ffffff;
+  --ink: #17202b;
+  --muted: #586374;
+  --rule: #d3dae3;
+  --accent: #2a75d3;
+  --rec: #cf3b30;
+  --mark: #d9821a;
+  --plate: #ffffff;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bench: #10151c; --strip: #18202a; --ink: #e6ebf1; --muted: #9aa6b5;
+    --rule: #2c3846; --accent: #6aa5ef; --rec: #f0685d; --mark: #f0a245; --plate: #ffffff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bench: #10151c; --strip: #18202a; --ink: #e6ebf1; --muted: #9aa6b5;
+  --rule: #2c3846; --accent: #6aa5ef; --rec: #f0685d; --mark: #f0a245; --plate: #ffffff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bench); color: var(--ink); font: 16px/1.45 var(--font-ui);
+  padding-inline: clamp(16px, 3vw, 36px); padding-block: 20px 32px;
+}
+header { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; justify-content: space-between; margin-bottom: 16px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+.spec { font-family: var(--font-num); font-size: 0.82rem; color: var(--muted); margin: 4px 0 0; }
+.global { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.keys { font-size: 0.82rem; color: var(--muted); }
+kbd { font-family: var(--font-num); font-size: 0.78rem; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--strip); color: var(--ink); }
+button, .filebtn {
+  font: 500 0.92rem var(--font-ui); color: var(--ink); background: var(--strip);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+button:hover, .filebtn:hover { border-color: var(--accent); }
+button:focus-visible, .filebtn:focus-within, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.rec { color: var(--rec); border-color: color-mix(in srgb, var(--rec) 45%, var(--rule)); }
+button.rec.on { background: var(--rec); color: #fff; border-color: var(--rec); }
+button:disabled { opacity: 0.45; cursor: default; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.filebtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+label.check { display: inline-flex; gap: 6px; align-items: center; font-size: 0.92rem; cursor: pointer; }
+main { display: grid; gap: 14px; }
+section.strip { background: var(--strip); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px 10px; display: grid; gap: 8px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.chip { font: 600 0.95rem var(--font-num); width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #fff; background: var(--accent); }
+.name { font: 500 1rem var(--font-ui); color: var(--ink); background: transparent; border: 0; border-bottom: 1px dashed var(--rule); padding: 3px 2px; min-width: 0; width: 15em; max-width: 100%; }
+.stats { margin-left: auto; font: 0.88rem var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; }
+.platewrap { position: relative; min-width: 0; }
+canvas.plate { display: block; width: 100%; height: 260px; background: var(--plate); border-radius: 4px; cursor: crosshair; touch-action: none; }
+.segs { font: 0.88rem var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.4em; overflow-wrap: anywhere; }
+.segs b { color: var(--mark); font-weight: 500; }
+.msg { font-size: 0.9rem; color: var(--rec); min-height: 0; }
+@media (max-width: 560px) { canvas.plate { height: 200px; } .stats { margin-left: 0; width: 100%; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Spectrogram Compare</h1>
+    <p class="spec">16 kHz · 25 ms Hann window · 10 ms hop · 512-point FFT · 0–8 kHz · 60 dB range</p>
+  </div>
+  <div class="global">
+    <label class="check"><input type="checkbox" id="trim" checked> Trim silence</label>
+    <button id="example" type="button">Load example</button>
+    <button id="save" type="button">Save PNG</button>
+    <span class="keys"><kbd>1</kbd>/<kbd>2</kbd> record A/B · <kbd>Space</kbd> stop · click the plate to mark a boundary</span>
+  </div>
+</header>
+<main id="strips"></main>
+
+<template id="tpl">
+  <section class="strip">
+    <div class="bar">
+      <span class="chip"></span>
+      <input class="name" type="text" aria-label="Recording name">
+      <button class="rec" type="button"><span class="dot"></span><span class="rlabel">Record</span></button>
+      <button class="play" type="button" disabled>Play</button>
+      <label class="filebtn">Open file<input class="file" type="file" accept="audio/*"></label>
+      <button class="clear" type="button" disabled>Clear marks</button>
+      <span class="stats"></span>
+    </div>
+    <div class="platewrap"><canvas class="plate"></canvas></div>
+    <div class="segs"></div>
+    <div class="msg" role="status"></div>
+  </section>
+</template>
+
+<script>
+"use strict";
+// ---------- analysis settings (match Lecture 3) ----------
+const SR = 16000, WIN = 400, HOP = 160, NFFT = 512, FMAX = 8000, DR = 60, MAX_SEC = 6;
+const LEFT = 46, RIGHT = 10, TOP = 8, BOTTOM = 40;   // plate margins in CSS px
+
+// ---------- FFT (iterative radix-2) ----------
+const fftCache = {};
+function fftTables(n) {
+  if (fftCache[n]) return fftCache[n];
+  const rev = new Uint32Array(n), bits = Math.log2(n);
+  for (let i = 0; i < n; i++) { let r = 0; for (let b = 0; b < bits; b++) r |= ((i >> b) & 1) << (bits - 1 - b); rev[i] = r; }
+  const cos = new Float64Array(n / 2), sin = new Float64Array(n / 2);
+  for (let i = 0; i < n / 2; i++) { cos[i] = Math.cos(2 * Math.PI * i / n); sin[i] = -Math.sin(2 * Math.PI * i / n); }
+  return (fftCache[n] = { rev, cos, sin });
+}
+function fftPower(frame, n, nKeep, out, off) {
+  const { rev, cos, sin } = fftTables(n);
+  const re = new Float64Array(n), im = new Float64Array(n);
+  for (let i = 0; i < n; i++) re[rev[i]] = i < frame.length ? frame[i] : 0;
+  for (let size = 2; size <= n; size <<= 1) {
+    const half = size >> 1, step = n / size;
+    for (let s = 0; s < n; s += size) {
+      for (let k = 0; k < half; k++) {
+        const c = cos[k * step], d = sin[k * step], a = s + k, b = a + half;
+        const tr = re[b] * c - im[b] * d, ti = re[b] * d + im[b] * c;
+        re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+      }
+    }
+  }
+  for (let k = 0; k < nKeep; k++) out[off + k] = 10 * Math.log10(re[k] * re[k] + im[k] * im[k] + 1e-12);
+}
+// Spectrogram in dB: frames x bins (0..FMAX). Works at any sample rate (live view uses the device rate).
+function makeSpec(sr) {
+  const win = Math.round(0.025 * sr), hop = Math.round(0.010 * sr);
+  let nfft = 1; while (nfft < win) nfft <<= 1;
+  const bins = Math.floor(FMAX * nfft / sr) + 1;
+  const w = new Float64Array(win);
+  for (let i = 0; i < win; i++) w[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / win);  // periodic Hann
+  return { sr, win, hop, nfft, bins, w };
+}
+function nFramesFor(len, p) { return len < p.win ? 0 : 1 + Math.floor((len - p.win) / p.hop); }
+function computeFrames(x, p, from, to, out) {
+  const buf = new Float64Array(p.win);
+  for (let f = from; f < to; f++) {
+    const s = f * p.hop;
+    for (let i = 0; i < p.win; i++) buf[i] = x[s + i] * p.w[i];
+    fftPower(buf, p.nfft, p.bins, out, f * p.bins);
+  }
+}
+const P16 = makeSpec(SR);   // win 400, hop 160, nfft 512, 257 bins
+
+// ---------- audio helpers ----------
+let actx = null;
+function ctx() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); return actx; }
+async function to16k(x, sr) {
+  if (sr === SR) return Float32Array.from(x);
+  const n = Math.max(1, Math.ceil(x.length * SR / sr));
+  const oac = new OfflineAudioContext(1, n, SR);
+  const b = oac.createBuffer(1, x.length, sr); b.copyToChannel(Float32Array.from(x), 0);
+  const src = oac.createBufferSource(); src.buffer = b; src.connect(oac.destination); src.start();
+  const r = await oac.startRendering();
+  return Float32Array.from(r.getChannelData(0));
+}
+function trimSilence(x) {
+  const n = Math.floor(x.length / HOP); if (n < 3) return x;
+  const e = new Float64Array(n); let mx = -Infinity;
+  for (let f = 0; f < n; f++) { let s = 0; for (let i = f * HOP; i < (f + 1) * HOP; i++) s += x[i] * x[i]; e[f] = 10 * Math.log10(s / HOP + 1e-12); if (e[f] > mx) mx = e[f]; }
+  const thr = mx - 35; let a = 0, b = n - 1;
+  while (a < n && e[a] < thr) a++;
+  while (b > a && e[b] < thr) b--;
+  const pad = 8;
+  const s0 = Math.max(0, (a - pad) * HOP), s1 = Math.min(x.length, (b + 1 + pad) * HOP + WIN);
+  return x.slice(s0, s1);
+}
+
+// ---------- slots ----------
+const slots = ["A", "B"].map((id, k) => ({ id, idx: k, name: k === 0 ? "A: normal speed" : "B: slow", raw: null, x: null, spec: null, frames: 0, marks: [], hover: -1, live: null, playhead: -1, el: null }));
+const stripsEl = document.getElementById("strips");
+const tpl = document.getElementById("tpl");
+for (const s of slots) {
+  const node = tpl.content.firstElementChild.cloneNode(true);
+  s.el = {
+    root: node, chip: node.querySelector(".chip"), name: node.querySelector(".name"), rec: node.querySelector(".rec"),
+    rlabel: node.querySelector(".rlabel"), play: node.querySelector(".play"), file: node.querySelector(".file"),
+    clear: node.querySelector(".clear"), stats: node.querySelector(".stats"), canvas: node.querySelector("canvas"),
+    segs: node.querySelector(".segs"), msg: node.querySelector(".msg")
+  };
+  s.el.chip.textContent = s.id;
+  s.el.chip.style.background = s.idx === 0 ? "var(--accent)" : "var(--ink)";
+  s.el.name.id = "name-" + s.id; s.el.name.value = s.name;
+  s.el.name.addEventListener("input", () => { s.name = s.el.name.value; });
+  s.el.rec.addEventListener("click", () => toggleRecord(s));
+  s.el.play.addEventListener("click", () => play(s));
+  s.el.clear.addEventListener("click", () => { s.marks = []; renderAll(); });
+  s.el.file.addEventListener("change", e => openFile(s, e.target.files[0]));
+  const cv = s.el.canvas;
+  cv.addEventListener("pointermove", e => { s.hover = xToBoundary(s, e); draw(s); });
+  cv.addEventListener("pointerleave", () => { s.hover = -1; draw(s); });
+  cv.addEventListener("pointerdown", e => toggleMark(s, e));
+  stripsEl.appendChild(node);
+}
+
+// shared time scale: pixels per frame, from the longer recording
+function plateWidth(s) { return s.el.canvas.clientWidth; }
+function pxPerFrame(s) {
+  const maxF = Math.max(100, ...slots.map(t => t.frames || 0));
+  return (plateWidth(s) - LEFT - RIGHT) / maxF;
+}
+function xToBoundary(s, e) {
+  if (!s.spec) return -1;
+  const r = s.el.canvas.getBoundingClientRect();
+  const k = Math.round((e.clientX - r.left - LEFT) / pxPerFrame(s));
+  return k >= 1 && k <= s.frames - 1 ? k : -1;
+}
+function toggleMark(s, e) {
+  const k = xToBoundary(s, e); if (k < 0) return;
+  const ppf = pxPerFrame(s), near = s.marks.findIndex(m => Math.abs(m - k) * ppf <= 6);
+  if (near >= 0) s.marks.splice(near, 1); else { s.marks.push(k); s.marks.sort((a, b) => a - b); }
+  renderAll();
+}
+
+// ---------- drawing ----------
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); return { g, w, h };
+}
+function specImage(spec, frames, bins) {
+  let mx = -Infinity; for (let i = 0; i < frames * bins; i++) if (spec[i] > mx) mx = spec[i];
+  const lo = mx - DR, oc = document.createElement("canvas"); oc.width = Math.max(1, frames); oc.height = bins;
+  const og = oc.getContext("2d"), im = og.createImageData(oc.width, bins);
+  for (let f = 0; f < frames; f++) for (let b = 0; b < bins; b++) {
+    let v = (spec[f * bins + b] - lo) / DR; v = v < 0 ? 0 : v > 1 ? 1 : v;
+    const shade = Math.round(255 * (1 - Math.pow(v, 1.3))), p = ((bins - 1 - b) * oc.width + f) * 4;
+    im.data[p] = shade; im.data[p + 1] = shade; im.data[p + 2] = Math.min(255, shade + 6); im.data[p + 3] = 255;
+  }
+  og.putImageData(im, 0, 0); return oc;
+}
+const INK = "#17202b", MUTED = "#586374", GRID = "#d3dae3", MARK = "#d9821a", ACC = "#2a75d3", REC = "#cf3b30";
+function drawAxes(g, w, h, ppf, frames) {
+  const x0 = LEFT, y0 = TOP, ph = h - TOP - BOTTOM;
+  g.fillStyle = MUTED; g.font = "12px " + getComputedStyle(document.body).getPropertyValue("--font-num");
+  g.textAlign = "right"; g.textBaseline = "middle";
+  for (let k = 0; k <= 8; k += 2) { const y = y0 + ph * (1 - k / 8); g.fillText(k + "k", x0 - 6, y); g.fillStyle = GRID; g.fillRect(x0 - 3, Math.round(y), 3, 1); g.fillStyle = MUTED; }
+  g.save(); g.translate(11, y0 + ph / 2); g.rotate(-Math.PI / 2); g.textAlign = "center"; g.fillText("Hz", 0, 0); g.restore();
+  // frame ruler
+  const yR = y0 + ph; g.fillStyle = GRID; g.fillRect(x0, yR, w - LEFT - RIGHT, 1);
+  const span = Math.max(100, frames);
+  let step = 10; if (ppf * 10 < 22) step = 20; if (ppf * 20 < 22) step = 50; if (ppf * 50 < 22) step = 100;
+  g.textAlign = "center"; g.textBaseline = "top";
+  for (let f = 0; f <= span; f += step / 2) {
+    const x = x0 + f * ppf; if (x > w - RIGHT + 0.5) break;
+    const major = f % step === 0;
+    g.fillStyle = major ? MUTED : GRID; g.fillRect(Math.round(x), yR, 1, major ? 7 : 4);
+    if (major) g.fillText(String(f), x, yR + 9);
+  }
+  g.textAlign = "left"; g.fillStyle = MUTED; g.fillText("frame (10 ms)", x0, yR + 24);
+}
+function draw(s) {
+  const { g, w, h } = setupCanvas(s.el.canvas);
+  g.fillStyle = "#ffffff"; g.fillRect(0, 0, w, h);
+  const ppf = s.live ? (w - LEFT - RIGHT) / (MAX_SEC * 100) : pxPerFrame(s);
+  const ph = h - TOP - BOTTOM;
+  if (s.live) {
+    if (s.live.img) { g.imageSmoothingEnabled = true; g.drawImage(s.live.img, 0, 0, s.live.done, s.live.p.bins, LEFT, TOP, s.live.done * ppf, ph); }
+    drawAxes(g, w, h, ppf, MAX_SEC * 100);
+    g.fillStyle = REC; g.font = "600 13px " + getComputedStyle(document.body).getPropertyValue("--font-ui"); g.textAlign = "right"; g.textBaseline = "top";
+    g.fillText("Recording… " + (s.live.done / 100).toFixed(1) + " s (max " + MAX_SEC + " s)", w - RIGHT - 4, TOP + 4);
+    return;
+  }
+  if (!s.spec) {
+    drawAxes(g, w, h, ppf, 0);
+    g.fillStyle = MUTED; g.textAlign = "center"; g.textBaseline = "middle"; g.font = "15px " + getComputedStyle(document.body).getPropertyValue("--font-ui");
+    g.fillText("Press Record (or key " + (s.idx + 1) + ") and say a word, or open an audio file.", LEFT + (w - LEFT - RIGHT) / 2, TOP + ph / 2);
+    return;
+  }
+  g.imageSmoothingEnabled = true;
+  g.drawImage(s.img, LEFT, TOP, s.frames * ppf, ph);
+  drawAxes(g, w, h, ppf, s.frames);
+  // end-of-recording line
+  g.fillStyle = GRID; g.fillRect(Math.round(LEFT + s.frames * ppf), TOP, 1, ph);
+  // marks
+  g.font = "500 12px " + getComputedStyle(document.body).getPropertyValue("--font-num"); g.textBaseline = "top"; g.textAlign = "center";
+  s.marks.forEach((m, i) => {
+    const x = Math.round(LEFT + m * ppf), y = TOP + (i % 2) * 19;   // stagger labels so close marks stay readable
+    g.fillStyle = MARK; g.fillRect(x - 1, TOP, 2, ph);
+    const t = String(m), tw = g.measureText(t).width + 8;
+    g.fillRect(x - tw / 2, y, tw, 17); g.fillStyle = "#fff"; g.fillText(t, x, y + 2);
+  });
+  // hover guide
+  if (s.hover > 0) {
+    const x = Math.round(LEFT + s.hover * ppf);
+    g.fillStyle = "rgba(42,117,211,0.55)"; g.fillRect(x, TOP, 1, ph);
+    g.fillStyle = ACC; g.textAlign = "right"; g.textBaseline = "top";
+    g.fillText("frame " + s.hover + " · " + (s.hover / 100).toFixed(2) + " s", w - RIGHT - 4, TOP + 4);
+  }
+  // playhead
+  if (s.playhead >= 0) { g.fillStyle = REC; g.fillRect(Math.round(LEFT + s.playhead * ppf), TOP, 2, ph); }
+}
+function renderAll() {
+  for (const s of slots) {
+    draw(s);
+    s.el.play.disabled = !s.x; s.el.clear.disabled = !s.marks.length;
+    s.el.stats.textContent = s.x ? (s.x.length / SR).toFixed(2) + " s · " + s.frames + " frames" : "";
+    if (s.x && s.marks.length) {
+      const b = [0, ...s.marks, s.frames], parts = [];
+      for (let i = 1; i < b.length; i++) parts.push("<b>" + (b[i] - b[i - 1]) + "</b>");
+      s.el.segs.innerHTML = "Segments (frames): " + parts.join(" | ");
+    } else s.el.segs.textContent = s.x ? "Click the plate to mark a boundary; click a mark again to remove it." : "";
+  }
+}
+new ResizeObserver(() => renderAll()).observe(stripsEl);
+
+// ---------- loading a signal into a slot ----------
+function setSignal(s, raw16) {
+  s.raw = raw16;
+  s.x = document.getElementById("trim").checked ? trimSilence(raw16) : raw16;
+  s.frames = nFramesFor(s.x.length, P16);
+  s.spec = new Float32Array(s.frames * P16.bins);
+  computeFrames(s.x, P16, 0, s.frames, s.spec);
+  s.img = specImage(s.spec, s.frames, P16.bins);
+  s.marks = s.marks.filter(m => m < s.frames);
+}
+document.getElementById("trim").addEventListener("change", () => {
+  for (const s of slots) if (s.raw) { s.marks = []; setSignal(s, s.raw); }
+  renderAll();
+});
+async function openFile(s, file) {
+  if (!file) return;
+  s.el.msg.textContent = "";
+  try {
+    const buf = await file.arrayBuffer(), ab = await ctx().decodeAudioData(buf);
+    const ch = ab.getChannelData(0);
+    s.marks = []; setSignal(s, await to16k(ch, ab.sampleRate));
+    s.name = s.id + ": " + file.name; s.el.name.value = s.name;
+  } catch (err) { s.el.msg.textContent = "This file could not be decoded. Try a WAV or MP3 file."; }
+  s.el.file.value = ""; renderAll();
+}
+
+// ---------- recording ----------
+let recording = null;
+async function toggleRecord(s) {
+  if (recording) { const same = recording.slot === s; await stopRecord(); if (same) return; }
+  s.el.msg.textContent = "";
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    s.el.msg.textContent = "The microphone only works on a secure page. Open this file through the slide server (localhost) or an https address, or use Open file.";
+    return;
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+  } catch (err) {
+    s.el.msg.textContent = err && err.name === "NotAllowedError"
+      ? "Microphone access is blocked. Allow it from the icon in the address bar, then press Record again."
+      : "No microphone was found. Connect one, or use Open file.";
+    return;
+  }
+  const c = ctx(), src = c.createMediaStreamSource(stream), proc = c.createScriptProcessor(4096, 1, 1);
+  const p = makeSpec(c.sampleRate), maxLen = MAX_SEC * c.sampleRate;
+  const live = { p, chunks: [], len: 0, done: 0, spec: new Float32Array(MAX_SEC * 100 * p.bins + p.bins), img: null, x: new Float32Array(maxLen + 8192) };
+  recording = { slot: s, stream, src, proc, live, sr: c.sampleRate };
+  s.live = live; s.el.rec.classList.add("on"); s.el.rlabel.textContent = "Stop";
+  proc.onaudioprocess = e => {
+    if (!recording || recording.live !== live) return;
+    const d = e.inputBuffer.getChannelData(0), n = Math.min(d.length, maxLen - live.len);
+    live.x.set(d.subarray(0, n), live.len); live.len += n;
+    const target = Math.min(nFramesFor(live.len, p), MAX_SEC * 100);
+    if (target > live.done) {
+      computeFrames(live.x, p, live.done, target, live.spec);
+      live.done = target;
+      live.img = specImage(live.spec.subarray(0, live.done * p.bins), live.done, p.bins);
+      draw(s);
+    }
+    if (live.len >= maxLen) stopRecord();
+  };
+  src.connect(proc); proc.connect(c.destination);
+  draw(s);
+}
+async function stopRecord() {
+  if (!recording) return;
+  const r = recording; recording = null;
+  r.proc.onaudioprocess = null;
+  try { r.src.disconnect(); r.proc.disconnect(); } catch (e) {}
+  r.stream.getTracks().forEach(t => t.stop());
+  const s = r.slot; s.live = null; s.el.rec.classList.remove("on"); s.el.rlabel.textContent = "Record";
+  if (r.live.len < 0.1 * r.sr) { s.el.msg.textContent = "The recording was too short. Hold Record for at least half a second."; renderAll(); return; }
+  s.marks = [];
+  setSignal(s, await to16k(r.live.x.subarray(0, r.live.len), r.sr));
+  if (!s.name || s.name.includes("example")) { s.name = s.id + (s.idx === 0 ? ": normal speed" : ": slow"); s.el.name.value = s.name; }
+  renderAll();
+}
+
+// ---------- playback ----------
+let playing = null;
+function play(s) {
+  if (!s.x) return;
+  const c = ctx();
+  if (playing) { try { playing.src.stop(); } catch (e) {} playing.slot.playhead = -1; draw(playing.slot); playing = null; }
+  const b = c.createBuffer(1, s.x.length, SR); b.copyToChannel(s.x, 0);
+  const src = c.createBufferSource(); src.buffer = b; src.connect(c.destination);
+  const t0 = c.currentTime + 0.02; src.start(t0);
+  playing = { src, slot: s };
+  const tick = () => {
+    if (!playing || playing.src !== src) return;
+    const f = (c.currentTime - t0) * 100;
+    s.playhead = Math.max(0, Math.min(f, s.frames)); draw(s);
+    if (f < s.frames) requestAnimationFrame(tick); else { s.playhead = -1; draw(s); }
+  };
+  src.onended = () => { if (playing && playing.src === src) { playing = null; s.playhead = -1; draw(s); } };
+  requestAnimationFrame(tick);
+}
+
+// ---------- synthetic example: 'sa' said at two speeds ----------
+function synthSa(sDur, aDur, seed) {
+  let r = seed; const rnd = () => ((r = (r * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const lead = 0.12, n = Math.round((lead + sDur + aDur + 0.12) * SR), x = new Float32Array(n);
+  for (let i = 0; i < n; i++) x[i] = (rnd() - 0.5) * 0.0008;            // room noise
+  const s0 = Math.round(lead * SR), s1 = s0 + Math.round(sDur * SR);
+  let p1 = 0, p2 = 0;                                                    // /s/: high-passed noise
+  for (let i = s0; i < s1; i++) {
+    const w = rnd() - 0.5, hp = w - 2 * p1 + p2; p2 = p1; p1 = w;
+    const env = Math.min(1, (i - s0) / 600, (s1 - i) / 600);
+    x[i] += 0.09 * hp * env;
+  }
+  const a1 = s1 + Math.round(aDur * SR), f0 = 125, F = [[750, 90], [1250, 110], [2600, 160]];
+  const H = [];                                                           // /a/: harmonics shaped by 3 formants
+  for (let k = 1; k * f0 < 7600; k++) {
+    const f = k * f0; let gain = 0;
+    for (const [fc, bw] of F) gain += 1 / Math.sqrt(1 + Math.pow((f - fc) / bw, 2));
+    H.push([f, gain * Math.pow(0.88, k)]);
+  }
+  for (let i = s1; i < a1; i++) {
+    const t = (i - s1) / SR, env = Math.min(1, (i - s1) / 400, (a1 - i) / 1200);
+    let v = 0; for (const [f, g] of H) v += g * Math.sin(2 * Math.PI * f * t);
+    x[i] += 0.05 * v * env;
+  }
+  return x;
+}
+function loadExample() {
+  const A = slots[0], B = slots[1];
+  A.marks = []; B.marks = [];
+  setSignal(A, synthSa(0.14, 0.26, 7)); setSignal(B, synthSa(0.20, 0.62, 11));
+  A.name = "A: example, synthetic 'sa' (normal)"; B.name = "B: example, synthetic 'sa' (slow)";
+  A.el.name.value = A.name; B.el.name.value = B.name;
+  const firstVoiced = s => { // mark the s|a boundary: first frame whose low band dominates
+    for (let f = 0; f < s.frames; f++) { let lo = -1e9, hi = -1e9; for (let b = 0; b < P16.bins; b++) { const v = s.spec[f * P16.bins + b]; if (b < 64) lo = Math.max(lo, v); else if (b > 128) hi = Math.max(hi, v); } if (lo > hi + 15) return f; }
+    return -1;
+  };
+  for (const s of [A, B]) { const k = firstVoiced(s); if (k > 0) s.marks = [k]; }
+  renderAll();
+}
+document.getElementById("example").addEventListener("click", loadExample);
+
+// ---------- save both plates as one PNG ----------
+document.getElementById("save").addEventListener("click", () => {
+  const used = slots.filter(s => s.x); if (!used.length) return;
+  const dpr = window.devicePixelRatio || 1, w = used[0].el.canvas.width, titleH = Math.round(30 * dpr);
+  const out = document.createElement("canvas"); out.width = w;
+  out.height = used.reduce((a, s) => a + s.el.canvas.height + titleH, 0);
+  const g = out.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, out.width, out.height);
+  let y = 0;
+  for (const s of used) {
+    g.fillStyle = INK; g.font = "600 " + Math.round(15 * dpr) + "px " + getComputedStyle(document.body).getPropertyValue("--font-ui"); g.textBaseline = "middle";
+    const segs = s.marks.length ? "   segments: " + [0, ...s.marks, s.frames].slice(1).map((b, i, arr) => b - (i ? arr[i - 1] : 0)).join(" | ") + " frames" : "";
+    g.fillText(s.name + "   (" + s.frames + " frames)" + segs, Math.round(LEFT * dpr), y + titleH / 2);
+    g.drawImage(s.el.canvas, 0, y + titleH); y += titleH + s.el.canvas.height;
+  }
+  out.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "spectrograms.png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); });
+});
+
+// ---------- keyboard ----------
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input[type=text]") || e.repeat) return;
+  if (e.key === "1") toggleRecord(slots[0]);
+  else if (e.key === "2") toggleRecord(slots[1]);
+  else if (e.key === " " && recording) { e.preventDefault(); stopRecord(); }
+});
+
+loadExample();
+</script>
+</body>
+</html>
