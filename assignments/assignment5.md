@@ -1,6 +1,6 @@
 # Assignment 5
 
-Due next week. Not graded.
+Not graded.
 
 Reading: Rabiner (1989), the solution to Problem 2 (the Viterbi algorithm) and the section on continuous observation densities (mixtures of Gaussians); J&M 3rd ed., Appendix A.4.
 
