@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trellis Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Same bench as Spectrogram Compare (Lecture 4): strips on a grey bench, plates stay white like printed figures. */
+:root {
+  --bench: #eef1f5;
+  --strip: #ffffff;
+  --ink: #17202b;
+  --muted: #586374;
+  --rule: #d3dae3;
+  --accent: #2a75d3;
+  --rec: #cf3b30;
+  --mark: #d9821a;
+  --plate: #ffffff;
+  --good: #2e9d5b;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bench: #10151c; --strip: #18202a; --ink: #e6ebf1; --muted: #9aa6b5;
+    --rule: #2c3846; --accent: #6aa5ef; --rec: #f0685d; --mark: #f0a245; --plate: #ffffff; --good: #4cc27f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bench: #10151c; --strip: #18202a; --ink: #e6ebf1; --muted: #9aa6b5;
+  --rule: #2c3846; --accent: #6aa5ef; --rec: #f0685d; --mark: #f0a245; --plate: #ffffff; --good: #4cc27f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bench); color: var(--ink); font: 16px/1.45 var(--font-ui);
+  padding-inline: clamp(16px, 3vw, 36px); padding-block: 20px 32px;
+}
+header { display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: end; justify-content: space-between; margin-bottom: 16px; }
+h1 { font-size: 1.6rem; font-weight: 600; margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+.spec { font-family: var(--font-num); font-size: 0.82rem; color: var(--muted); margin: 4px 0 0; }
+.keys { font-size: 0.82rem; color: var(--muted); }
+kbd { font-family: var(--font-num); font-size: 0.78rem; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--strip); color: var(--ink); }
+button {
+  font: 500 0.92rem var(--font-ui); color: var(--ink); background: var(--strip);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: 0.45; cursor: default; }
+button[aria-pressed="true"], button[aria-selected="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tabs { display: flex; gap: 6px; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; }
+.seg button:first-child { border-radius: 6px 0 0 6px; }
+.seg button:last-child { border-radius: 0 6px 6px 0; }
+.seg button + button { margin-left: -1px; }
+main { display: grid; gap: 14px; }
+section.strip { background: var(--strip); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px 12px; display: grid; gap: 10px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.bar .grow { flex: 1 1 auto; }
+.obs { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.obs button { font-family: var(--font-num); min-width: 64px; justify-content: center; }
+.obs button.h { color: #2a75d3; border-color: color-mix(in srgb, #2a75d3 45%, var(--rule)); }
+.obs button.v { color: #e04a3f; border-color: color-mix(in srgb, #e04a3f 45%, var(--rule)); }
+svg.plate { display: block; width: 100%; height: auto; background: var(--plate); border-radius: 4px; }
+svg.plate text { font-family: var(--font-ui); }
+.read { font: 0.92rem var(--font-num); color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.4em; overflow-wrap: anywhere; }
+.read b { color: var(--ink); font-weight: 500; }
+.words { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.card h2 { display: flex; justify-content: space-between; gap: 8px; }
+.card .chip { font: 600 0.85rem var(--font-num); color: #fff; border-radius: 5px; padding: 1px 8px; }
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; font-size: 0.9rem; }
+.slider input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.slider output { font: 0.88rem var(--font-num); color: var(--muted); }
+.verdict { font-size: 1rem; padding: 8px 12px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 8%, var(--strip)); border: 1px solid var(--rule); }
+.verdict.disagree { background: color-mix(in srgb, var(--mark) 18%, var(--strip)); border-color: var(--mark); }
+.verdict b { font-weight: 600; }
+.hint { font-size: 0.88rem; color: var(--muted); }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Trellis Lab</h1>
+    <p class="spec">Lecture 5 · two-state words /s/ → /a/ · symbols h, v · start in /s/, end in /a/</p>
+  </div>
+  <div class="bar">
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="tab-sum-max" aria-controls="panel-sum-max" aria-selected="true">Sum vs Max</button>
+      <button role="tab" id="tab-em" aria-controls="panel-em" aria-selected="false">EM</button>
+    </div>
+    <span class="keys"><kbd>Space</kbd> next step</span>
+  </div>
+</header>
+
+<main>
+<!-- ======================================================= Sum vs Max -->
+<div id="panel-sum-max" role="tabpanel" aria-labelledby="tab-sum-max" class="panel" style="display:grid;gap:14px">
+  <section class="strip" aria-labelledby="h-trellis">
+    <div class="bar">
+      <h2 id="h-trellis">Trellis</h2>
+      <span class="seg" aria-label="Which word">
+        <button type="button" id="show-a" aria-pressed="true">Word A</button>
+        <button type="button" id="show-b" aria-pressed="false">Word B</button>
+      </span>
+      <span class="seg" aria-label="Sum or max">
+        <button type="button" id="mode-sum" aria-pressed="false">Sum (forward)</button>
+        <button type="button" id="mode-max" aria-pressed="true">Max (Viterbi)</button>
+      </span>
+      <span class="grow"></span>
+      <button type="button" id="t-step">Step</button>
+      <button type="button" id="t-fill">Fill all</button>
+      <button type="button" id="t-clear">Clear</button>
+    </div>
+    <div class="bar">
+      <span class="hint">Observations (click to switch):</span>
+      <span class="obs" id="obs"></span>
+      <button type="button" id="t-minus" aria-label="Remove a frame">− frame</button>
+      <button type="button" id="t-plus" aria-label="Add a frame">+ frame</button>
+      <button type="button" id="t-reset">Reset to <i>salaam</i></button>
+    </div>
+    <svg class="plate" id="trellis" role="img" aria-label="Trellis"></svg>
+    <div class="read" id="tread" aria-live="polite"></div>
+  </section>
+
+  <section class="strip" aria-labelledby="h-words">
+    <div class="bar">
+      <h2 id="h-words">Two words: do the two scores rank them the same way?</h2>
+      <span class="grow"></span>
+      <button type="button" id="w-preset">Show me one</button>
+      <button type="button" id="w-reset">Reset</button>
+    </div>
+    <p class="hint" style="margin:0">To recognize a word, score the audio with each word's HMM and keep the higher score: the <b>total</b> over all alignments (forward) or the <b>best</b> alignment only (Viterbi). Each word is a two-state model. Change its emission sharpness <i>q</i> (b<sub>s</sub>(h) = b<sub>a</sub>(v) = q) and the self-loop of /s/. Each bar stacks that word's alignments; the dark block is its best one.</p>
+    <div class="words">
+      <div class="card" id="card-A"></div>
+      <div class="card" id="card-B"></div>
+    </div>
+    <svg class="plate" id="bars" role="img" aria-label="Alignments of word A and word B"></svg>
+    <div class="verdict" id="verdict" aria-live="polite"></div>
+  </section>
+</div>
+
+<!-- ======================================================= EM -->
+<div id="panel-em" role="tabpanel" aria-labelledby="tab-em" class="panel" hidden style="display:grid;gap:14px">
+  <section class="strip" aria-labelledby="h-em">
+    <div class="bar">
+      <h2 id="h-em">EM for two bumps</h2>
+      <span class="seg" aria-label="Data">
+        <button type="button" id="d-cards" aria-pressed="true">Activity 6 cards</button>
+        <button type="button" id="d-f1" aria-pressed="false">F1 of /a/</button>
+      </span>
+      <span class="seg" aria-label="Hard or soft">
+        <button type="button" id="m-hard" aria-pressed="true">Hard (k-means)</button>
+        <button type="button" id="m-soft" aria-pressed="false">Soft (EM)</button>
+      </span>
+      <span class="grow"></span>
+      <button type="button" id="e-step">E-step</button>
+      <button type="button" id="m-step" disabled>M-step</button>
+      <button type="button" id="e-run">Run</button>
+      <button type="button" id="e-reset">Reset</button>
+    </div>
+    <p class="hint" style="margin:0">Drag the two centres (the triangles under the axis) to choose where EM starts. Colour shows each point's share: blue for bump 1, red for bump 2.</p>
+    <svg class="plate" id="emplot" role="img" aria-label="Data, bumps and centres"></svg>
+    <div class="read" id="emread" aria-live="polite"></div>
+  </section>
+</div>
+</main>
+
+<script>
+"use strict";
+// ---------- shared drawing helpers ----------
+const SVGNS = "http://www.w3.org/2000/svg";
+const COL = { s: "#2a75d3", a: "#e04a3f", orange: "#e08a3f", green: "#2e9d5b", ink: "#17202b", muted: "#586374",
+              light: "#d5dde8", faint: "#e9edf2", fillS: "#eaf2fd", fillA: "#fde9e7", fillO: "#fcefe2", grey: "#9aa3ad" };
+const $ = id => document.getElementById(id);
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs) { const t = el("text", Object.assign({ x, y }, attrs || {}), parent); t.textContent = s; return t; }
+const SUB = "₀₁₂₃₄₅₆₇₈₉";
+const sub = n => String(n).split("").map(d => SUB[+d]).join("");
+const fmt4 = v => (v === 0 ? "0" : v >= 0.001 ? v.toFixed(4) : v.toExponential(2));
+const fmt3 = v => (v === 0 ? "0" : v >= 0.001 ? v.toPrecision(3) : v.toExponential(2));
+function arrow(parent, x1, y1, x2, y2, r1, r2, color, width, dash) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+  const head = Math.max(10, width * 2.6);
+  const sx = x1 + ux * r1, sy = y1 + uy * r1, ex = x2 - ux * r2, ey = y2 - uy * r2;
+  el("line", { x1: sx, y1: sy, x2: ex - ux * head * 0.8, y2: ey - uy * head * 0.8, stroke: color, "stroke-width": width,
+               "stroke-dasharray": dash || null, "stroke-linecap": "round" }, parent);
+  const px = -uy, py = ux, bx = ex - ux * head, by = ey - uy * head;
+  el("polygon", { points: `${ex},${ey} ${bx + px * head * 0.45},${by + py * head * 0.45} ${bx - px * head * 0.45},${by - py * head * 0.45}`,
+                  fill: color }, parent);
+}
+
+// ================================================================= Sum vs Max
+const SALAAM = { q: 0.8, loop: 0.5 };
+const PRESET = { A: { q: 0.95, loop: 0.1 }, B: { q: 0.65, loop: 0.7 }, x: ["h", "v", "h", "v"] };
+const S = { x: ["h", "v", "h", "v"], mode: "max", shown: 4, word: "A",
+            words: { A: { ...SALAAM }, B: { q: 0.6, loop: 0.5 } } };
+
+// emission: /s/ (0) likes h, /a/ (1) likes v; q is how strongly
+const emit = (w, j, o) => (j === 0 ? (o === "h" ? w.q : 1 - w.q) : (o === "v" ? w.q : 1 - w.q));
+// left to right: /s/ stays or moves on; /a/ stays (no way back)
+const trans = (w, i, j) => (i === 0 ? (j === 0 ? w.loop : 1 - w.loop) : (j === 1 ? 1 : 0));
+
+function runTrellis(w, x) {
+  const T = x.length, alpha = [[emit(w, 0, x[0]), 0]], delta = [[emit(w, 0, x[0]), 0]], psi = [[-1, -1]];
+  for (let t = 1; t < T; t++) {
+    alpha.push([0, 0]); delta.push([0, 0]); psi.push([-1, -1]);
+    for (let j = 0; j < 2; j++) {
+      let sum = 0, best = -1, bestV = -1;
+      for (let i = 0; i < 2; i++) {
+        const a = trans(w, i, j);
+        if (a === 0) continue;
+        sum += alpha[t - 1][i] * a;
+        const v = delta[t - 1][i] * a;
+        if (v > bestV) { bestV = v; best = i; }
+      }
+      alpha[t][j] = sum * emit(w, j, x[t]);
+      delta[t][j] = bestV * emit(w, j, x[t]);
+      psi[t][j] = best;
+    }
+  }
+  const path = [1];                                   // the word ends in its last state, /a/
+  for (let t = T - 1; t > 0; t--) path.unshift(psi[t][path[0]]);
+  return { alpha, delta, psi, path, P: alpha[T - 1][1], Pstar: delta[T - 1][1] };
+}
+function alignments(w, x) {                           // every way to switch from /s/ to /a/ once
+  const T = x.length, out = [];
+  for (let k = 1; k < T; k++) {
+    let p = Math.pow(w.loop, k - 1) * (1 - w.loop);
+    for (let t = 0; t < T; t++) p *= emit(w, t < k ? 0 : 1, x[t]);
+    out.push({ k, p, label: "s".repeat(k) + "|" + "a".repeat(T - k) });
+  }
+  return out;
+}
+
+function drawObs() {
+  const box = $("obs");
+  box.innerHTML = "";
+  S.x.forEach((o, t) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = o;
+    b.textContent = `x${sub(t + 1)} = ${o}`;
+    b.setAttribute("aria-label", `Frame ${t + 1}: ${o}. Click to switch.`);
+    b.addEventListener("click", () => { S.x[t] = o === "h" ? "v" : "h"; renderSumMax(); });
+    box.appendChild(b);
+  });
+  $("t-minus").disabled = S.x.length <= 2;
+  $("t-plus").disabled = S.x.length >= 8;
+}
+
+function drawTrellis() {
+  const svg = $("trellis"), w = S.words[S.word], x = S.x, T = x.length, R = runTrellis(w, x);
+  const W = 900, H = 290, left = 120, right = 70, rowY = [78, 196], r = 31;
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const step = (W - left - right) / Math.max(T - 1, 1), cx = t => left + t * step;
+  const done = Math.min(S.shown, T);
+  txt(svg, 52, rowY[0] + 9, "/s/", { fill: COL.s, "font-size": 26, "text-anchor": "middle" });
+  txt(svg, 52, rowY[1] + 9, "/a/", { fill: COL.a, "font-size": 26, "text-anchor": "middle" });
+  for (let t = 0; t < T; t++) {
+    txt(svg, cx(t), 28, `t = ${t + 1}`, { fill: COL.muted, "font-size": 17, "text-anchor": "middle" });
+    txt(svg, cx(t), 268, `x${sub(t + 1)} = ${x[t]}`, { fill: x[t] === "h" ? COL.s : COL.a, "font-size": 18, "text-anchor": "middle" });
+  }
+  // edges
+  for (let t = 1; t < T; t++) for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) {
+    const a = trans(w, i, j);
+    if (a === 0) continue;
+    let color = COL.faint, width = 1.6, dash = null;
+    if (t < done) {
+      if (S.mode === "max") {
+        const onPath = done === T && R.path[t - 1] === i && R.path[t] === j;
+        if (onPath) { color = COL.orange; width = 5; }
+        else if (R.psi[t][j] === i) { color = j === 0 ? COL.s : COL.a; width = 2.6; }
+        else { color = COL.light; width = 1.6; dash = "6 5"; }
+      } else {
+        const tot = R.alpha[t - 1][0] * trans(w, 0, j) + R.alpha[t - 1][1] * trans(w, 1, j);
+        const share = tot > 0 ? R.alpha[t - 1][i] * a / tot : 0;
+        if (share > 0) { color = j === 0 ? COL.s : COL.a; width = 1.2 + 6 * share; }
+        else { color = COL.light; dash = "6 5"; }
+      }
+    }
+    arrow(svg, cx(t - 1), rowY[i], cx(t), rowY[j], r + 3, r + 4, color, width, dash);
+  }
+  // nodes
+  for (let t = 0; t < T; t++) for (let j = 0; j < 2; j++) {
+    const filled = t < done, color = j === 0 ? COL.s : COL.a;
+    const onPath = S.mode === "max" && done === T && R.path[t] === j;
+    const current = filled && t === done - 1 && done < T;
+    el("circle", { cx: cx(t), cy: rowY[j], r, fill: onPath ? COL.fillO : current ? (j === 0 ? COL.fillS : COL.fillA) : "#fff",
+                   stroke: onPath ? COL.orange : filled ? color : "#dfe4ec", "stroke-width": onPath ? 3.4 : 2.4 }, svg);
+    if (filled) {
+      const v = S.mode === "max" ? R.delta[t][j] : R.alpha[t][j];
+      txt(svg, cx(t), rowY[j] + 6, fmt4(v), { fill: "#333", "font-size": 15.5, "text-anchor": "middle" });
+    }
+  }
+  // readout
+  const T1 = sub(T);
+  const pct = R.P > 0 ? Math.round(100 * R.Pstar / R.P) : 0;
+  const name = S.word === "A" ? "Word A" : "Word B";
+  let msg;
+  if (done < T) msg = `${name}: filled ${done} of ${T} columns. Press Step (or Space).`;
+  else if (S.mode === "sum") msg = `${name}: P(X) = α${T1}(a) = <b>${fmt4(R.P)}</b>, the sum over all ${T - 1} alignments that end in /a/.`;
+  else msg = `${name}: P* = δ${T1}(a) = <b>${fmt4(R.Pstar)}</b>, ${pct}% of P(X) = ${fmt4(R.P)}. Best path: <b>${R.path.map(j => "sa"[j]).join(" ")}</b>.`;
+  $("tread").innerHTML = msg;
+  $("t-step").disabled = done >= T;
+}
+
+function wordCard(id) {
+  const card = $("card-" + id), w = S.words[id];
+  const color = id === "A" ? COL.s : COL.a;
+  card.innerHTML = `
+    <h2><span>Word ${id}</span><span class="chip" style="background:${color}">${id}</span></h2>
+    <label class="slider">emission sharpness q <output id="oq-${id}">${w.q.toFixed(2)}</output>
+      <input type="range" id="q-${id}" min="0.5" max="0.99" step="0.01" value="${w.q}"></label>
+    <label class="slider">self-loop of /s/ <output id="ol-${id}">${w.loop.toFixed(2)}</output>
+      <input type="range" id="l-${id}" min="0.05" max="0.95" step="0.05" value="${w.loop}"></label>`;
+  $("q-" + id).addEventListener("input", e => { w.q = +e.target.value; $("oq-" + id).textContent = w.q.toFixed(2); renderSumMax(false); });
+  $("l-" + id).addEventListener("input", e => { w.loop = +e.target.value; $("ol-" + id).textContent = w.loop.toFixed(2); renderSumMax(false); });
+}
+
+function drawBars() {
+  const svg = $("bars"), W = 900, H = 250, base = 210, top = 34;
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const res = ["A", "B"].map(id => {
+    const al = alignments(S.words[id], S.x);
+    return { id, al, sum: al.reduce((s, a) => s + a.p, 0), max: Math.max(...al.map(a => a.p)) };
+  });
+  const ymax = Math.max(...res.map(r => r.sum)) * 1.08 || 1, scale = (base - top) / ymax;
+  el("line", { x1: 60, x2: W - 40, y1: base, y2: base, stroke: "#555", "stroke-width": 1.5 }, svg);
+  res.forEach((r, k) => {
+    const x0 = k === 0 ? 210 : 560, bw = 130, color = k === 0 ? COL.s : COL.a, light = k === 0 ? "#a9c6ec" : "#f3b2ab";
+    let y = base;
+    const bestK = r.al.findIndex(a => a.p === r.max);
+    r.al.forEach((a, i) => {
+      const h = a.p * scale;
+      const isBest = i === bestK;
+      el("rect", { x: x0, y: y - h, width: bw, height: Math.max(h, 0), fill: isBest ? color : light, stroke: "#fff", "stroke-width": 2 }, svg)
+        .appendChild(Object.assign(document.createElementNS(SVGNS, "title"), { textContent: `${a.label}: ${fmt3(a.p)}` }));
+      if (h > 17) txt(svg, x0 + bw / 2, y - h / 2 + 5, a.label, { fill: isBest ? "#fff" : "#333", "font-size": 13, "text-anchor": "middle", "font-family": "IBM Plex Mono, monospace" });
+      y -= h;
+    });
+    txt(svg, x0 + bw / 2, base + 26, `Word ${r.id}`, { fill: color, "font-size": 18, "font-weight": 600, "text-anchor": "middle" });
+    txt(svg, x0 + bw + 14, base - r.sum * scale + 5, `total ${fmt3(r.sum)}`, { fill: "#333", "font-size": 15 });
+    txt(svg, x0 + bw + 14, base - r.max * scale / 2 + 5 + (bestK > 0 ? -r.al.slice(0, bestK).reduce((s, a) => s + a.p, 0) * scale : 0),
+        `best ${fmt3(r.max)}`, { fill: color, "font-size": 15, "font-weight": 600 });
+  });
+  // verdict
+  const [A, B] = res;
+  const winner = (a, b) => (a > b ? "A" : b > a ? "B" : null);
+  const v = winner(A.max, B.max), f = winner(A.sum, B.sum);
+  const same = v === f;
+  const box = $("verdict");
+  box.className = "verdict" + (same ? "" : " disagree");
+  const ranks = (w, a, b) => (w ? `ranks <b>word ${w}</b> higher` : "gives <b>a tie</b>") + ` (${fmt3(a)} vs ${fmt3(b)})`;
+  box.innerHTML = `Best-path score (Viterbi) ${ranks(v, A.max, B.max)}. ` +
+                  `Total score (forward) ${ranks(f, A.sum, B.sum)}. ` +
+                  (same ? "Both scores rank the words the same way."
+                        : "<b>The two scores rank the words differently!</b> One word has a single strong path; the other spreads its probability over many.");
+}
+
+function renderSumMax(resetObs = true) {
+  if (resetObs) drawObs();
+  ["A", "B"].forEach(id => $("show-" + id.toLowerCase()).setAttribute("aria-pressed", S.word === id));
+  $("mode-sum").setAttribute("aria-pressed", S.mode === "sum");
+  $("mode-max").setAttribute("aria-pressed", S.mode === "max");
+  S.shown = Math.min(S.shown, S.x.length);
+  drawTrellis();
+  drawBars();
+}
+$("show-a").addEventListener("click", () => { S.word = "A"; renderSumMax(); });
+$("show-b").addEventListener("click", () => { S.word = "B"; renderSumMax(); });
+$("mode-sum").addEventListener("click", () => { S.mode = "sum"; renderSumMax(); });
+$("mode-max").addEventListener("click", () => { S.mode = "max"; renderSumMax(); });
+$("t-step").addEventListener("click", () => { S.shown = Math.min(S.shown + 1, S.x.length); renderSumMax(); });
+$("t-fill").addEventListener("click", () => { S.shown = S.x.length; renderSumMax(); });
+$("t-clear").addEventListener("click", () => { S.shown = 1; renderSumMax(); });
+$("t-plus").addEventListener("click", () => { if (S.x.length < 8) { S.x.push("v"); S.shown = S.x.length; renderSumMax(); } });
+$("t-minus").addEventListener("click", () => { if (S.x.length > 2) { S.x.pop(); S.shown = Math.min(S.shown, S.x.length); renderSumMax(); } });
+$("t-reset").addEventListener("click", () => { S.x = ["h", "v", "h", "v"]; S.words.A = { ...SALAAM }; S.word = "A"; S.shown = 4; wordCard("A"); renderSumMax(); });
+$("w-preset").addEventListener("click", () => {
+  S.words.A = { ...PRESET.A }; S.words.B = { ...PRESET.B }; S.x = PRESET.x.slice(); S.shown = S.x.length;
+  wordCard("A"); wordCard("B"); renderSumMax();
+});
+$("w-reset").addEventListener("click", () => {
+  S.words.A = { ...SALAAM }; S.words.B = { q: 0.6, loop: 0.5 }; S.x = ["h", "v", "h", "v"]; S.shown = 4;
+  wordCard("A"); wordCard("B"); renderSumMax();
+});
+
+// ================================================================= EM
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function makeF1() {
+  const rnd = mulberry32(7), out = [];
+  const normal = () => { const u = Math.max(rnd(), 1e-12), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  for (let i = 0; i < 300; i++) out.push(730 + 60 * normal());   // adult men
+  for (let i = 0; i < 200; i++) out.push(1030 + 80 * normal());  // children
+  return out.map(v => Math.min(1340, Math.max(460, v)));
+}
+const SETS = {
+  cards: { data: [1, 2, 3, 4, 5, 6, 12, 13, 14, 15], lo: 0, hi: 16, start: [1, 4], sigma0: 2, floor: 0.3, big: true, tick: 1, unit: "" },
+  f1: { data: makeF1(), lo: 450, hi: 1350, start: [650, 720], sigma0: 100, floor: 10, big: false, tick: 100, unit: " Hz" },
+};
+const jitter = (() => { const rnd = mulberry32(11); return Array.from({ length: 600 }, () => rnd()); })();
+const EM = { set: "cards", mode: "hard", start: [], mu: [], sigma: [], c: [], r: null, phase: "E", iter: 0, done: false, timer: null, note: "" };
+const gauss = (x, m, s) => Math.exp(-0.5 * ((x - m) / s) ** 2) / (Math.sqrt(2 * Math.PI) * s);
+const set = () => SETS[EM.set];
+const fmtv = v => (set().big ? (Math.round(v * 100) / 100).toString() : Math.round(v).toString());
+
+function emReset(keepStart) {
+  stopRun();
+  const D = set();
+  if (!keepStart || EM.start.length !== 2) EM.start = D.start.slice();   // where EM starts (drag the centres to change it)
+  EM.mu = EM.start.slice();
+  EM.sigma = [D.sigma0, D.sigma0]; EM.c = [0.5, 0.5]; EM.r = null; EM.phase = "E"; EM.iter = 0; EM.done = false;
+  EM.note = "Drag the two centres to choose where EM starts, then press E-step (or Space).";
+  drawEM();
+}
+function eStep() {
+  const D = set(), prev = EM.r ? EM.r.map(r => (r[1] > r[0] ? 1 : 0)) : null;
+  EM.r = D.data.map(v => {
+    if (EM.mode === "hard") return Math.abs(v - EM.mu[1]) < Math.abs(v - EM.mu[0]) ? [0, 1] : [1, 0];
+    const p = [0, 1].map(m => EM.c[m] * gauss(v, EM.mu[m], EM.sigma[m])), z = p[0] + p[1];
+    return z > 0 ? [p[0] / z, p[1] / z] : [0.5, 0.5];
+  });
+  if (EM.mode === "hard") {
+    const now = EM.r.map(r => (r[1] > r[0] ? 1 : 0));
+    const switched = prev ? now.filter((a, i) => a !== prev[i]).length : null;
+    EM.note = "E-step: every point joins the nearer centre." + (switched === null ? "" : ` ${switched} ${switched === 1 ? "point" : "points"} switched.`);
+  } else {
+    EM.note = "E-step: every point is shared between the bumps, in proportion to their heights (colour = share).";
+  }
+  EM.phase = "M";
+  drawEM();
+}
+function mStep() {
+  const D = set(), n = D.data.length, old = EM.mu.slice();
+  for (let m = 0; m < 2; m++) {
+    let Nm = 0, sx = 0;
+    D.data.forEach((v, i) => { Nm += EM.r[i][m]; sx += EM.r[i][m] * v; });
+    if (Nm < 1e-9) continue;
+    EM.mu[m] = sx / Nm;
+    if (EM.mode === "soft") {
+      let sv = 0;
+      D.data.forEach((v, i) => { sv += EM.r[i][m] * (v - EM.mu[m]) ** 2; });
+      EM.sigma[m] = Math.max(Math.sqrt(sv / Nm), D.floor);
+      EM.c[m] = Nm / n;
+    }
+  }
+  EM.iter++;
+  const moved = Math.max(Math.abs(EM.mu[0] - old[0]), Math.abs(EM.mu[1] - old[1]));
+  EM.done = moved < 1e-4 * (D.hi - D.lo);
+  EM.note = EM.done ? `Converged after ${EM.iter} updates: nothing moves any more.`
+                    : (EM.mode === "hard" ? "M-step: each centre moves to the average of its group."
+                                          : "M-step: each bump takes the weighted average, spread and share of its points.");
+  EM.phase = "E";
+  drawEM();
+}
+function nextEM() { if (EM.done) return; if (EM.phase === "E") eStep(); else mStep(); }
+function stopRun() { if (EM.timer) { clearInterval(EM.timer); EM.timer = null; $("e-run").textContent = "Run"; } }
+function toggleRun() {
+  if (EM.timer) { stopRun(); return; }
+  if (EM.done) emReset(true);
+  $("e-run").textContent = "Pause";
+  EM.timer = setInterval(() => { if (EM.done || EM.iter > 200) { stopRun(); drawEM(); return; } nextEM(); }, set().big ? 450 : 260);
+}
+function fitText() {
+  const D = set();
+  if (!EM.r) return "";
+  if (EM.mode === "hard") {
+    const sq = D.data.reduce((s, v, i) => s + (v - EM.mu[EM.r[i][1] > EM.r[i][0] ? 1 : 0]) ** 2, 0);
+    return ` · spread: Σ squared distance to own centre = ${D.big ? sq.toFixed(1) : Math.round(sq).toLocaleString("en-US")}`;
+  }
+  const ll = D.data.reduce((s, v) => s + Math.log(Math.max(EM.c[0] * gauss(v, EM.mu[0], EM.sigma[0]) + EM.c[1] * gauss(v, EM.mu[1], EM.sigma[1]), 1e-300)), 0);
+  return ` · fit: log-likelihood = ${ll.toFixed(1)}`;
+}
+
+let drag = null;
+function drawEM() {
+  const D = set(), svg = $("emplot"), W = 900, H = 300, L = 60, Rr = 30, axisY = 250, base = 200, topY = 46;
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const X = v => L + (v - D.lo) / (D.hi - D.lo) * (W - L - Rr);
+  // histogram (F1) and curves (soft)
+  const xs = Array.from({ length: 301 }, (_, k) => D.lo + (D.hi - D.lo) * k / 300);
+  const comp = m => xs.map(v => EM.c[m] * gauss(v, EM.mu[m], EM.sigma[m]));
+  let hist = null, peak = 0;
+  if (!D.big) {
+    const nb = 36, bw = (D.hi - D.lo) / nb, counts = new Array(nb).fill(0);
+    D.data.forEach(v => { counts[Math.min(nb - 1, Math.floor((v - D.lo) / bw))]++; });
+    hist = counts.map(c => c / (D.data.length * bw));
+    peak = Math.max(...hist);
+  }
+  let c0 = null, c1 = null;
+  if (EM.mode === "soft") { c0 = comp(0); c1 = comp(1); peak = Math.max(peak, ...c0.map((v, k) => v + c1[k])); }
+  const yS = peak > 0 ? (base - topY) / peak : 0;
+  if (hist) {
+    const bw = (D.hi - D.lo) / hist.length;
+    hist.forEach((h, k) => el("rect", { x: X(D.lo + k * bw) + 1, y: base - h * yS, width: Math.max(X(D.lo + bw) - X(D.lo) - 2, 1), height: h * yS, fill: "#e3e7ed" }, svg));
+  }
+  if (c0) {
+    const line = arr => xs.map((v, k) => `${k ? "L" : "M"}${X(v).toFixed(1)},${(base - arr[k] * yS).toFixed(1)}`).join("");
+    el("path", { d: line(c0), fill: "none", stroke: COL.s, "stroke-width": 2.2, "stroke-dasharray": "7 5" }, svg);
+    el("path", { d: line(c1), fill: "none", stroke: COL.a, "stroke-width": 2.2, "stroke-dasharray": "7 5" }, svg);
+    el("path", { d: line(c0.map((v, k) => v + c1[k])), fill: "none", stroke: "#444", "stroke-width": 2.6 }, svg);
+  }
+  // centres
+  [0, 1].forEach(m => {
+    const cx = X(EM.mu[m]), color = m === 0 ? COL.s : COL.a;
+    el("line", { x1: cx, x2: cx, y1: topY - 8, y2: axisY, stroke: color, "stroke-width": 2, "stroke-dasharray": "4 4" }, svg);
+    txt(svg, cx, topY - 14, `μ${sub(m + 1)} = ${fmtv(EM.mu[m])}`, { fill: color, "font-size": 15, "font-weight": 600, "text-anchor": "middle" });
+    const h = el("polygon", { points: `${cx},${axisY + 4} ${cx - 11},${axisY + 22} ${cx + 11},${axisY + 22}`, fill: color, class: "handle",
+                              style: "cursor: ew-resize", tabindex: 0, "aria-label": `Centre ${m + 1}, drag to move` }, svg);
+    h.addEventListener("pointerdown", e => { e.preventDefault(); stopRun(); drag = m; svg.setPointerCapture(e.pointerId); });
+  });
+  // axis
+  el("line", { x1: L, x2: W - Rr, y1: axisY, y2: axisY, stroke: "#555", "stroke-width": 1.5 }, svg);
+  for (let v = Math.ceil(D.lo / D.tick) * D.tick; v <= D.hi; v += D.tick) {
+    el("line", { x1: X(v), x2: X(v), y1: axisY, y2: axisY + 5, stroke: "#555" }, svg);
+    if (D.big || v % 200 === 0) txt(svg, X(v), axisY + 40, String(v), { fill: COL.muted, "font-size": 13, "text-anchor": "middle" });
+  }
+  if (!D.big) txt(svg, W - Rr, axisY + 40, "F1 (Hz)", { fill: COL.muted, "font-size": 13, "text-anchor": "end" });
+  // points
+  D.data.forEach((v, i) => {
+    let fill = COL.grey;
+    if (EM.r) {
+      const t = EM.r[i][1];
+      const mix = (a, b) => Math.round(a + (b - a) * t);
+      fill = `rgb(${mix(0x2a, 0xe0)},${mix(0x75, 0x4a)},${mix(0xd3, 0x3f)})`;
+    }
+    const y = D.big ? axisY - 22 : base + 8 + jitter[i % jitter.length] * 34;
+    const dot = el("circle", { cx: X(v), cy: y, r: D.big ? 12 : 3.4, fill, stroke: "#fff", "stroke-width": D.big ? 2 : 0.6 }, svg);
+    const tip = document.createElementNS(SVGNS, "title");
+    tip.textContent = `x = ${fmtv(v)}${D.unit}` + (EM.r ? ` · shares ${EM.r[i][0].toFixed(2)} / ${EM.r[i][1].toFixed(2)}` : "");
+    dot.appendChild(tip);
+    if (D.big) txt(svg, X(v), y + 5, String(v), { fill: "#fff", "font-size": 12, "font-weight": 600, "text-anchor": "middle", "pointer-events": "none" });
+  });
+  // readout
+  const parts = [`update ${EM.iter}`, `μ = (${fmtv(EM.mu[0])}, ${fmtv(EM.mu[1])})`];
+  if (EM.mode === "soft") parts.push(`σ = (${fmtv(EM.sigma[0])}, ${fmtv(EM.sigma[1])})`, `c = (${EM.c[0].toFixed(2)}, ${EM.c[1].toFixed(2)})`);
+  $("emread").innerHTML = `<b>${EM.note}</b><br>${parts.join(" · ")}${fitText()}`;
+  $("e-step").disabled = EM.phase !== "E" || EM.done;
+  $("m-step").disabled = EM.phase !== "M" || EM.done;
+  $("d-cards").setAttribute("aria-pressed", EM.set === "cards");
+  $("d-f1").setAttribute("aria-pressed", EM.set === "f1");
+  $("m-hard").setAttribute("aria-pressed", EM.mode === "hard");
+  $("m-soft").setAttribute("aria-pressed", EM.mode === "soft");
+}
+(() => {
+  const svg = $("emplot");
+  svg.addEventListener("pointermove", e => {
+    if (drag === null) return;
+    const D = set(), pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const W = 900, L = 60, Rr = 30;
+    let v = D.lo + (p.x - L) / (W - L - Rr) * (D.hi - D.lo);
+    v = Math.min(D.hi, Math.max(D.lo, v));
+    EM.start[drag] = D.big ? Math.round(v * 2) / 2 : Math.round(v);
+    emReset(true);
+  });
+  const end = () => { drag = null; };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+})();
+$("e-step").addEventListener("click", () => { stopRun(); eStep(); });
+$("m-step").addEventListener("click", () => { stopRun(); mStep(); });
+$("e-run").addEventListener("click", toggleRun);
+$("e-reset").addEventListener("click", () => emReset(false));
+$("d-cards").addEventListener("click", () => { EM.set = "cards"; emReset(false); });
+$("d-f1").addEventListener("click", () => { EM.set = "f1"; emReset(false); });
+$("m-hard").addEventListener("click", () => { EM.mode = "hard"; emReset(true); });
+$("m-soft").addEventListener("click", () => { EM.mode = "soft"; emReset(true); });
+
+// ================================================================= tabs and keys
+function showTab(name) {
+  const em = name === "em";
+  $("panel-sum-max").hidden = em; $("panel-em").hidden = !em;
+  $("tab-sum-max").setAttribute("aria-selected", !em);
+  $("tab-em").setAttribute("aria-selected", em);
+  if (!em) stopRun();
+}
+$("tab-sum-max").addEventListener("click", () => { history.replaceState(null, "", "#sum-max"); showTab("sum-max"); });
+$("tab-em").addEventListener("click", () => { history.replaceState(null, "", "#em"); showTab("em"); });
+window.addEventListener("hashchange", () => showTab(location.hash === "#em" ? "em" : "sum-max"));
+document.addEventListener("keydown", e => {
+  if (e.key !== " " || e.repeat) return;
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  if (["INPUT", "BUTTON", "SELECT", "TEXTAREA"].includes(tag)) return;
+  e.preventDefault();
+  if (!$("panel-em").hidden) { stopRun(); nextEM(); }
+  else { S.shown = Math.min(S.shown + 1, S.x.length); renderSumMax(); }
+});
+
+wordCard("A"); wordCard("B");
+renderSumMax();
+emReset(false);
+showTab(location.hash === "#em" ? "em" : "sum-max");
+</script>
+</body>
+</html>

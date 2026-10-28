@@ -57,19 +57,20 @@ Week| Date |Topic | Contents | Paper | CLO | Lecture | Assignment
 1 | 09-21 | Intro | General introduction to the course. WER/CER metrics. |  Browse [Open ASR Leaderboard](https://huggingface.co/spaces/hf-audio/open_asr_leaderboard) as a benchmark | 6 | [Lecture 1](lectures/lecture1.md) | [Assignment 1](assignments/assignment1.md)
 2 | 09-28 | Foundations | Formants, quantization, framing, F0 and intensity, spectrogram, sampling.  | Ch. 16.1-16.2 |  1 | [Lecture 2](lectures/lecture2.md) | [Assignment 2](assignments/assignment2.md)
 3 | 10-05 | Spectral Front End | DFT/FFT, windowing and spectral leakage, time-frequency resolution, STFT and spectrogram, mel filterbank, log-mel. MFCC | Ch. 15.5.2–15.6  | 1, 2 | [Lecture 3](lectures/lecture3.md) | [Assignment 3](assignments/assignment3.md)
-4 | 10-12 | Alignment & Decoding | The alignment problem, HMM, forward algorithm, Viterbi, GMM as a density model.| [Rabiner (1989), _A Tutorial on Hidden Markov Models_](https://ieeexplore.ieee.org/document/18626) | 3 | [Lecture 4](lectures/lecture4.md) | [Assignment 4](assignments/assignment4.md) **Project proposal**
-5 | 10-19 | CTC | Blank symbol, collapse function, summing over alignments, forward-backward, prefix beam search, shallow LM fusion | [Graves et al. (2006), _Connectionist Temporal Classification_](https://www.cs.toronto.edu/~graves/icml_2006.pdf) | 3, 4 | | 
-6 | 10-26 | Encoders & Transducers | CNN, BiLSTM, Transformer. RNN-T (encoder + prediction + joint network), Conformer/FastConformer, subsampling, chunked attention and causality | [Graves (2012), _Sequence Transduction with RNNs_](https://arxiv.org/abs/1211.3711); [Gulati et al. (2020), _Conformer_](https://arxiv.org/abs/2005.08100) | 4 | | 
-7 | 11-02 | Self-Supervised Learning | Why labels are the bottleneck, wav2vec 2.0 (masking, quantized targets, contrastive loss), HuBERT (offline clustering, masked prediction), WavLM, low-resource fine-tuning | [Baevski et al. (2020), _wav2vec 2.0_](https://arxiv.org/abs/2006.11477); [Hsu et al. (2021), _HuBERT_](https://arxiv.org/abs/2106.07447) | 4 | | **Data + evaluation protocol + pretrained baseline**
+4 | 10-12 | Alignment & HMMs | The alignment problem, HMM, forward algorithm (finished in week 5).| [Rabiner (1989), _A Tutorial on Hidden Markov Models_](https://ieeexplore.ieee.org/document/18626) | 3 | [Lecture 4](lectures/lecture4.md) | [Assignment 4](assignments/assignment4.md) **Project proposal**
+5 | 10-19 | HMMs | Forward algorithm (finished)| [Rabiner (1989)](https://ieeexplore.ieee.org/document/18626), Problems 1 and 2 | 3 | Continue Lecture 4 | 
+6 | 10-26 | Viterbi & GMMs | Viterbi and backpointers, forced alignment, Gaussians and Gaussian mixtures | [Graves et al. (2006), _Connectionist Temporal Classification_](https://www.cs.toronto.edu/~graves/icml_2006.pdf) | 3 | [Lecture 5](lectures/lecture4.md) | [Assignment 5](assignments/assignment5.md)
+7 | 11-02  | GMMs & CTC | EM (hard and soft), diagonal covariance, GMM-HMM training, the hybrid DNN-HMM, Blank symbol, collapse function, summing over alignments, forward-backward, prefix beam search, shallow LM fusion | [Graves et al. (2006), _Connectionist Temporal Classification_](https://www.cs.toronto.edu/~graves/icml_2006.pdf) | 3, 4 | | Lab Quiz
 8 | 11-09 | **Midterm** | | | 1, 2, 3, 4 | |
-9 | 11-16 | Weak Supervision at Scale | Attention encoder-decoder, cross-attention, Whisper's multitask token format, hallucination and repetition, long-form chunking, the scale-vs-curation debate | [Radford et al. (2023), _Whisper_](https://arxiv.org/abs/2212.04356); [Puvvada et al. (2024), _Less is more_](https://arxiv.org/abs/2406.19674) | 4, 6 | | 
-10 | 11-23 | Neural Audio Codecs | VQ-VAE, straight-through estimator, codebook collapse, residual vector quantization, EnCodec, semantic vs acoustic tokens | [Défossez et al. (2022), _EnCodec_](https://arxiv.org/abs/2210.13438) | 5 | | **Working system + training curves**
-11 | 11-30 | TTS as Language Modelling | VALL-E's two-stage AR + NAR recipe, zero-shot voice cloning from a 3-second prompt, instability and duration control, flow-matching alternatives, vocoders, MOS and speaker similarity | [Wang et al. (2023), _VALL-E_](https://arxiv.org/abs/2301.02111) | 5, 6 | | 
-12 | 12-07 | Speech LLMs | Speech encoder + projector + LLM, what is frozen and what is trained, prompt-conditioned ASR, spoken QA and audio understanding, why a large LLM does not automatically lower WER | [Tang et al. (2023), _SALMONN_](https://arxiv.org/abs/2310.13289); [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni) | 5, 6 | | 
-13 | 12-14 | **Project Demos** | Team presentations and evaluation | - | 4, 5, 6 | | **Final report due (all teams)**
-14 | 12-21 | **Project Demos** | Team presentations and evaluation | - | 4, 5, 6 | | 
+9 | 11-16 | Encoders & Transducers | CNN, BiLSTM, Transformer. RNN-T (encoder + prediction + joint network), Conformer/FastConformer, subsampling, chunked attention and causality | [Graves (2012), _Sequence Transduction with RNNs_](https://arxiv.org/abs/1211.3711); [Gulati et al. (2020), _Conformer_](https://arxiv.org/abs/2005.08100) | 4 | | **Data + evaluation protocol + pretrained baseline**
+10 | 11-23 | Self-Supervised Learning | Why labels are the bottleneck, wav2vec 2.0 (masking, quantized targets, contrastive loss), HuBERT (offline clustering, masked prediction), WavLM, low-resource fine-tuning | [Baevski et al. (2020), _wav2vec 2.0_](https://arxiv.org/abs/2006.11477); [Hsu et al. (2021), _HuBERT_](https://arxiv.org/abs/2106.07447) | 4 | | 
+11 | 11-30 | Weak Supervision at Scale | Attention encoder-decoder, cross-attention, Whisper's multitask token format, hallucination and repetition, long-form chunking, the scale-vs-curation debate | [Radford et al. (2023), _Whisper_](https://arxiv.org/abs/2212.04356); [Puvvada et al. (2024), _Less is more_](https://arxiv.org/abs/2406.19674) | 4, 6 | | **Working system + training curves**
+12 | 12-07 | Neural Audio Codecs | VQ-VAE, straight-through estimator, codebook collapse, residual vector quantization, EnCodec, semantic vs acoustic tokens | [Défossez et al. (2022), _EnCodec_](https://arxiv.org/abs/2210.13438) | 5 | | 
+13 | 12-14 | TTS as Language Modelling | VALL-E's two-stage AR + NAR recipe, zero-shot voice cloning from a 3-second prompt, instability and duration control, flow-matching alternatives, vocoders, MOS and speaker similarity | [Wang et al. (2023), _VALL-E_](https://arxiv.org/abs/2301.02111) | 5, 6 | | 
+14 | 12-21 | Speech LLMs | Speech encoder + projector + LLM, what is frozen and what is trained, prompt-conditioned ASR, spoken QA and audio understanding, why a large LLM does not automatically lower WER | [Tang et al. (2023), _SALMONN_](https://arxiv.org/abs/2310.13289); [Qwen3-Omni](https://github.com/QwenLM/Qwen3-Omni) | 5, 6 | | **Final report due (all teams)**
 15 | 12-28 | **Project Demos** | Team presentations and evaluation | - | 4, 5, 6 | | 
-16 | | **Final** | | | all | |
+16 | 12-28 | **Project Demos** | Team presentations and evaluation | - | 4, 5, 6 | | 
+17 | | **Final** | | | all | |
 
 
 ---
@@ -99,7 +100,7 @@ Week| Date |Topic | Contents | Paper | CLO | Lecture | Assignment
     4 | Proposal: the idea, why it is needed, dataset plan, evaluation metric
     7 | Data (with consent documentation where applicable), evaluation protocol, pretrained baseline results
     10 | Working system with training curves and error analysis
-    13 | Final report, due for all teams regardless of demo slot; demos run weeks 13-15
+    13 | Final report, due for all teams regardless of demo slot; demos run weeks 14-15
 
 ---
 
